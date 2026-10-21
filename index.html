@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080e24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NEON DEFENSE | LAST STAND Ver.0.5</title>
+<title>NEON DEFENSE | BOSS BREAK Ver.0.6</title>
 <style>
   :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
   * { box-sizing: border-box; }
@@ -37,6 +37,13 @@
   .feverText {min-width:65px;text-align:right;color:#ffd471;font-variant-numeric:tabular-nums;}
   .comboStrip.fever .feverFill {background:linear-gradient(90deg,#ffe66c,#ff7d32);box-shadow:0 0 15px #ffdf6b;}
   .comboStrip.fever .comboCount {color:#fff48f;text-shadow:0 0 10px #ffa441;}
+  .phaseRow { display:flex;justify-content:space-between;margin-top:5px;gap:8px;color:#b0d5f9;font-size:10px;font-weight:900;letter-spacing:.2px; }
+  #phaseLabel { color:#a2edff; } #threatLabel { text-align:right;color:#e5b9d0; }
+  .bossHud { margin-top:9px;padding:8px 10px;background:#320d27df;border:1px solid #ff738b96;border-radius:11px;box-shadow:0 0 20px #ed29454d; }
+  .bossHud.hidden {display:none;}
+  .bossHeading {display:flex;justify-content:space-between;color:#ffe0e4;font-size:11px;font-weight:1000;margin-bottom:6px;}
+  .bossBar {height:10px;border:1px solid #ff8daa7a;border-radius:7px;background:#34192d;overflow:hidden;}
+  #bossFill {height:100%;width:100%;background:linear-gradient(90deg,#ffae54,#ff426e);transition:width .1s;}
   .bottomNote { z-index:2; position:absolute; bottom:calc(env(safe-area-inset-bottom) + 10px); left:0; right:0; text-align:center; color:#9fc9e7a0; font-size:11px; letter-spacing:.5px; pointer-events:none; }
   .overlay { position:absolute; z-index:5; inset:0; padding:32px 24px calc(env(safe-area-inset-bottom) + 28px); display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071025e8,#06172ce0); backdrop-filter:blur(9px); text-align:center; }
   /* 小型iPhoneや横画面でもスタートボタンが画面外に隠れないようにする */
@@ -66,7 +73,7 @@
   <canvas id="field" aria-label="敵を撃退するアクションゲーム"></canvas>
   <div class="hud">
     <div class="hudTop">
-      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.5</span></div>
+      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.6</span></div>
       <div class="hudBtns">
         <button id="soundBtn" class="iconBtn" aria-label="音を切り替える" title="効果音">♫̸</button>
         <button id="pauseBtn" class="iconBtn" aria-label="一時停止" title="一時停止">Ⅱ</button>
@@ -77,7 +84,9 @@
       <div class="stat"><span class="statLabel">⚡ 連射</span><strong class="statValue" id="statRapid">Lv.1</strong></div>
       <div class="stat"><span class="statLabel">🛡️ 基地HP</span><strong class="statValue" id="statBase">15</strong></div>
     </div>
-    <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">0 / 170 撃破</span></div>
+    <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">BOSSまで55秒</span></div>
+    <div class="phaseRow"><span id="phaseLabel">第1波・絶体絶命</span><span id="threatLabel">敵の侵攻に警戒！</span></div>
+    <div id="bossHud" class="bossHud hidden"><div class="bossHeading"><span>⚠ OVERLORD - 最終決戦</span><strong id="bossPct">100%</strong></div><div class="bossBar"><div id="bossFill"></div></div></div>
     <div id="comboStrip" class="comboStrip"><span id="comboCount" class="comboCount">CHAIN ×0</span><div class="feverWrap"><div id="feverFill" class="feverFill"></div></div><span id="feverText" class="feverText">FEVER 0/9</span></div>
   </div>
   <div class="bottomNote" id="bottomNote">⚠️ 序盤は火力不足！敵を引きつけて耐えよう</div>
@@ -86,18 +95,18 @@
       <span class="tag">たかしくん × オールマイト 第1号</span>
       <h1>NEON<br>DEFENSE</h1>
       <p class="subtitle">ネオン・ディフェンス</p>
-      <p class="lead">ギリギリまで迫る敵を食い止めろ！<br>絶体絶命から逆転する LAST STAND！</p>
+      <p class="lead">絶体絶命から反撃せよ！<br>3つの猛攻を耐えて、巨大ボスを撃破せよ！</p>
       <div class="howto">
         <div><span>👆</span> 指を左右に動かして大砲を操作</div>
         <div><span>💥</span> 弾は自動で連続発射！</div>
         <div><span>🔵</span> 流れる青いゲートに「自機」で触れると弾数アップ</div>
         <div><span>⚡</span> 黄色のゲートに「自機」で触れると連射アップ</div>
-        <div><span>🔥</span> 9連続撃破でフィーバー！逆転のチャンス！</div>
-        <div><span>🛡️</span> 170体を撃破し、55秒以上生き残ればクリア！</div>
+        <div><span>🔥</span> 9連続撃破でフィーバー！ボス戦でも頼れる切り札！</div>
+        <div><span>🛡️</span> 55秒後に巨大ボスが登場！倒せばクリア！</div>
       </div>
       <button class="primary" id="startBtn">▶ ゲームスタート</button>
       <p class="mobileTip">📱 iPhoneでは公開したURLをSafariで開いて遊ぼう。「ファイル」アプリのプレビューでは動作しない場合があります。</p>
-      <p class="small">iPhone・PC対応 / Web公開してプレイ推奨<br>Ver.0.5 攻防バランス調整：危機 → 強化 → 大群！</p>
+      <p class="small">iPhone・PC対応 / Web公開してプレイ推奨<br>Ver.0.6 BOSS BREAK：敵の進化・大群・最終決戦！</p>
     </div>
   </div>
   <div id="endOverlay" class="overlay hidden">
@@ -131,14 +140,15 @@ window.addEventListener('error',e=>{
 });
 const app=document.getElementById('game');
 const el=id=>document.getElementById(id);
-const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),combo:el('comboCount'),feverBar:el('feverFill'),feverText:el('feverText'),comboStrip:el('comboStrip'),note:el('bottomNote'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
-const W=390, GOAL=170, MIN_SURVIVAL=55, TAU=Math.PI*2;
+const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),combo:el('comboCount'),feverBar:el('feverFill'),feverText:el('feverText'),comboStrip:el('comboStrip'),note:el('bottomNote'),phase:el('phaseLabel'),threat:el('threatLabel'),bossHud:el('bossHud'),bossFill:el('bossFill'),bossPct:el('bossPct'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
+const W=390, BOSS_TIME=55, TAU=Math.PI*2;
 const MAX_BLASTERS=12, MAX_RAPID=5;
 const COMBO_WINDOW=3.1, FEVER_TRIGGER=9, FEVER_DURATION=4.5, FEVER_COOLDOWN=16;
 // 敵（約50〜95px/秒）より必ず速く、2枚のゲートが奥から連続で流れてくる。
 const GATE_SPEED=245, GATE_INTERVAL=5.6;
 let H=800, scale=1, dpr=1, last=0, state='ready', pointerDown=false, keyboard=0;
 let t=0, elapsed=0, spawnClock=0, shotClock=0, gateClock=0, waveSeq=0, idSeq=0, flash=0, screenShake=0, combo=0, bestCombo=0, comboClock=0, feverTime=0, feverCooldown=0;
+let boss=null,bossShots=[],bossShotClock=2.2,bossWarning=false,phaseIndex=0,playerHurtTime=0,phaseNoteTime=0,victoryTimer=0;
 let player, bullets=[], enemies=[], particles=[], shocks=[], labels=[], gates=[], kills=0, maxHP=15, hp=15, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rgba=(hex,opacity)=>hex;
@@ -159,8 +169,12 @@ function hud(){
   $.blasters.textContent='×'+blastCount;
   $.rapid.textContent='Lv.'+rapidLevel;
   $.base.textContent=hp;
-  $.kills.textContent=kills+' / '+GOAL+' 撃破';
-  $.progress.style.width=Math.min(100,kills/GOAL*100)+'%';
+  $.kills.textContent=boss?'BOSS戦！ '+kills+'撃破':'BOSSまで '+Math.max(0,Math.ceil(BOSS_TIME-elapsed))+'秒';
+  $.progress.style.width=(boss?100:Math.min(100,elapsed/BOSS_TIME*100))+'%';
+  $.bossHud.classList.toggle('hidden',!boss);
+  if(boss){$.bossFill.style.width=Math.max(0,boss.hp/boss.max*100)+'%';$.bossPct.textContent=Math.ceil(boss.hp/boss.max*100)+'%';}
+  const labels=['第1波・絶体絶命','第2波・逆転の反撃','第3波・敵の総攻撃','FINAL BOSS'];
+  $.phase.textContent=labels[phaseIndex]||labels[0];
   $.base.style.color=hp<=4?'#ff596e':'#ff8499';
   $.combo.textContent='CHAIN ×'+combo;
   $.feverBar.style.width=(feverTime>0?100:feverCooldown>0?Math.round((1-feverCooldown/FEVER_COOLDOWN)*100):Math.min(100,combo/FEVER_TRIGGER*100))+'%';
@@ -169,6 +183,7 @@ function hud(){
 }
 function newGame(){
   t=0;elapsed=0;spawnClock=.20;shotClock=.3;gateClock=4.1;waveSeq=0;idSeq=0;flash=0;screenShake=0;combo=0;bestCombo=0;comboClock=0;feverTime=0;feverCooldown=0;
+  boss=null;bossShots=[];bossShotClock=2.2;bossWarning=false;phaseIndex=0;playerHurtTime=0;phaseNoteTime=0;victoryTimer=0;
   player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
   bullets=[];enemies=[];particles=[];shocks=[];labels=[];kills=0;hp=maxHP;blastCount=1;rapidLevel=1;
   gates=[];
@@ -180,11 +195,11 @@ function pause(){if(state!=='playing')return;state='paused';$.pause.classList.re
 function resume(){if(state!=='paused')return;state='playing';$.pause.classList.add('hidden');last=performance.now();}
 function finish(win){
   if(state!=='playing')return;
-  state='ended';$.end.classList.remove('hidden');
+  state=win?'victory':'ended';if(!win)$.end.classList.remove('hidden');
   el('endTag').textContent=win?'MISSION COMPLETE':'GAME OVER';
   el('endTitle').textContent=win?'クリア！！':'基地が突破された！';
-  el('endMsg').innerHTML=win?'敵'+GOAL+'体を撃退して防衛成功！<br>最大 '+bestCombo+' CHAIN！ 君の逆転勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>最大 '+bestCombo+' CHAIN！ ゲートをつかんで盛り返そう！';
-  if(win){burst(W/2,H*.35,'#86ffda',75,5);beep(620,.2,'triangle');}
+  el('endMsg').innerHTML=win?'巨大ボスを撃破！<br>一般兵 '+kills+'体撃破・最大 '+bestCombo+' CHAIN！<br>君の逆転勝利だ！！ 🎉':'一般兵 '+kills+'体撃破・最大 '+bestCombo+' CHAIN！<br>流れるゲートで強化し、もう一度挑戦！';
+  if(win){victoryTimer=1.35;burst(W/2,H*.40,'#86ffda',72,3);shockwave(W/2,H*.40,'#ffda7f',true);beep(620,.2,'triangle');}
   else beep(140,.4,'sawtooth');
 }
 function beep(freq=400,dur=.045,type='sine',vol=.02){
@@ -212,7 +227,7 @@ function shockwave(x,y,color,large=false){
 function onDefeat(e){
   kills++;
   combo=comboClock>0?combo+1:1;comboClock=COMBO_WINDOW;bestCombo=Math.max(bestCombo,combo);
-  burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',16,1.05);
+  burst(e.x,e.y,e.kind==='runner'?'#8bffad':e.kind==='armored'?'#ffdc71':'#ff617d',e.kind==='brute'?23:15,1.05);
   shockwave(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff8ba0');
   screenShake=Math.max(screenShake,combo%5===0?2.4:1);
   if(elapsed>=12&&combo>=FEVER_TRIGGER&&feverCooldown<=0&&feverTime<=0){
@@ -247,27 +262,97 @@ function surgeActive(){return elapsed>=14&&((elapsed-14)%17)<9;}
 function nextSpawnInterval(){
   const strength=(blastCount-1)*.25+(rapidLevel-1)*.75;
   const base=elapsed<8?.52:.72-Math.min(.15,elapsed*.003)-Math.min(.16,strength*.032);
-  return clamp(base,.30,.78)*(surgeActive()?.74:1.06)*rand(.88,1.12);
+  return clamp(base,.30,.78)*(surgeActive()?.74:1.06)*(boss?1.26:1)*rand(.88,1.12);
 }
 function spawnEnemy(){
-  if(enemies.length>=64)return;
+  // 同時数を制限してiPhoneでのフレーム落ちを防止する。
+  if(enemies.length>=67)return;
   const strength=(blastCount-1)*.36+(rapidLevel-1)*.95;
-  const surge=surgeActive(), early=elapsed<8;
-  const count=early?(1+(Math.random()<.78?1:0)):
+  const surge=surgeActive(),early=elapsed<8;
+  // ボス戦は援軍が途切れず襲うが、中央のボスを狙う余裕も残す。
+  const count=boss?(1+(Math.random()<.70?1:0)+(surge&&Math.random()<.35?1:0)):
+    early?(1+(Math.random()<.78?1:0)):
     Math.min(6,2+(Math.random()<.7?1:0)+Math.floor(Math.min(strength,7)/2.6)+(surge?1:0));
-  const center=rand(48,W-48),stride=rand(25,39);
-  for(let i=0;i<count&&enemies.length<64;i++){
-    const brute=elapsed>24&&Math.random()<(surge?.11:.045);
-    const armored=!brute&&elapsed>9&&Math.random()<Math.min(.20+elapsed*.002+strength*.025,.56);
-    const kind=brute?'brute':armored?'armored':'normal';
-    const armor=kind==='brute'?7+Math.floor(elapsed/20)+Math.floor(strength*.32):
+  const center=rand(48,W-48),stride=rand(26,39);
+  for(let i=0;i<count&&enemies.length<67;i++){
+    const roll=Math.random();
+    const runner=elapsed>16&&roll<(boss?.23:.18);
+    const brute=!runner&&elapsed>24&&Math.random()<(surge?.13:.055);
+    const armored=!runner&&!brute&&elapsed>9&&Math.random()<Math.min(.18+elapsed*.0019+strength*.023,.53);
+    const kind=runner?'runner':brute?'brute':armored?'armored':'normal';
+    const armor=kind==='runner'?(elapsed>40?3:2):kind==='brute'?7+Math.floor(elapsed/24)+Math.floor(strength*.30):
       kind==='armored'?3+Math.floor(elapsed/24)+Math.floor(strength*.24):
       (elapsed>18&&Math.random()<.45?2:1);
-    const speed=brute?rand(68,89)+Math.min(elapsed*.25,13):rand(91,114)+Math.min(elapsed*.38,22);
-    const r=kind==='brute'?23:kind==='armored'?16:12;
+    const speed=runner?rand(151,178):brute?rand(68,89)+Math.min(elapsed*.25,13):rand(91,114)+Math.min(elapsed*.38,22);
+    const r=kind==='runner'?10:kind==='brute'?23:kind==='armored'?16:12;
     const x=clamp(center+(i-(count-1)/2)*stride+rand(-8,8),25,W-25);
-    enemies.push({id:++idSeq,x,y:-42-rand(0,18),vx:rand(-10,10),speed,r,hp:armor,max:armor,kind,phase:rand(0,TAU)});
+    enemies.push({id:++idSeq,x,y:-42-rand(0,18),vx:runner?rand(-26,26):rand(-10,10),speed,r,hp:armor,max:armor,kind,phase:rand(0,TAU)});
   }
+}
+// ボス本体は奥に留まり、プレイヤーを狙ったプラズマ弾を放つ。
+function spawnBoss(){
+  if(boss)return;
+  phaseIndex=3;
+  const power=blastCount+rapidLevel*2;
+  const max=Math.round(clamp(96+power*4.4,105,165));
+  boss={x:W/2,y:-90,targetY:H*.47,r:47,hp:max,max,phase:0,hitFlash:0,entered:false};
+  bossShots=[];bossShotClock=3.2;
+  gates=[];gateClock=2.3; // ボス戦でもパワーアップは継続
+  floatLabel(W/2,H*.43,'⚠ OVERLORD 出現！','#ff9bb6');
+  shockwave(W/2,H*.38,'#ff668e',true);screenShake=6;
+  beep(160,.45,'sawtooth',.06);hud();
+}
+function updateBoss(dt){
+  if(!boss)return;
+  boss.phase+=dt;
+  boss.hitFlash=Math.max(0,boss.hitFlash-dt*5);
+  boss.y+=(boss.targetY-boss.y)*Math.min(1,dt*1.22);
+  boss.entered=boss.y>H*.405;
+  boss.x=W/2+Math.sin(boss.phase*.67)*47;
+  if(!boss.entered)return;
+  bossShotClock-=dt;
+  if(bossShotClock<=0){
+    bossShotClock=clamp(3.0-(elapsed-BOSS_TIME)*.012,2.2,3.0);
+    // 発射前に狙った場所を記録。発射後に動けば避けられる。
+    const aimX=clamp(player.x+rand(-13,13),29,W-29);
+    const travelY=Math.max(0,boss.y+36);
+    bossShots.push({x:aimX,y:travelY,vy:225,r:12,life:4.0,phase:0});
+    burst(aimX,boss.y+34,'#ff7faa',13,.65);beep(230,.14,'sawtooth',.04);
+    if(bossShots.length>9)bossShots.shift();
+  }
+  for(let i=bossShots.length-1;i>=0;i--){
+    const z=bossShots[i];z.y+=z.vy*dt;z.life-=dt;z.phase+=dt;
+    if(z.y>=player.y-14){
+      bossShots.splice(i,1);
+      if(Math.abs(z.x-player.x)<28&&playerHurtTime<=0){
+        playerHurtTime=1.0;hp=Math.max(0,hp-2);flash=.9;screenShake=7;
+        burst(player.x,player.y,'#ff5a98',26,1.1);
+        floatLabel(player.x,player.y-95,'直撃！基地 −2','#ffabb7');
+        beep(120,.27,'sawtooth',.055);hud();
+        if(hp<=0){finish(false);return;}
+      }
+    }else if(z.life<=0||z.y>H+35)bossShots.splice(i,1);
+  }
+}
+function bossDamage(b){
+  if(!boss||!boss.entered)return false;
+  const dx=(b.x-boss.x)/boss.r,dy=(b.y-boss.y)/(boss.r*.95);
+  if(dx*dx+dy*dy>1)return false;
+  boss.hp=Math.max(0,boss.hp-1);
+  boss.hitFlash=.45;
+  if(Math.random()<.28)burst(b.x,b.y,'#ffcb83',5,.48);
+  if(boss.hp<=0){
+    const bx=boss.x,by=boss.y;
+    boss=null;bossShots=[];
+    shockwave(bx,by,'#ffde7e',true);
+    burst(bx,by,'#ff627f',80,2.7);
+    burst(bx,by,'#ffe89c',60,2.3);
+    screenShake=9;finish(true);
+  }else if(boss.hp%12===0){
+    shockwave(b.x,b.y,'#ffb377');
+    beep(390,.07,'triangle',.019);
+  }
+  hud();return true;
 }
 function fire(){
   const boosted=feverTime>0;
@@ -320,6 +405,16 @@ function gateScale(g){
 }
 function update(dt){
   t+=dt;elapsed+=dt;
+  playerHurtTime=Math.max(0,playerHurtTime-dt);
+  if(elapsed>=49&&!bossWarning){bossWarning=true;floatLabel(W/2,H*.48,'⚠ 巨大反応！ボス接近！','#ffce8c');shockwave(W/2,H*.40,'#ff8c90',true);beep(280,.23,'triangle',.05);}
+  if(elapsed>=BOSS_TIME&&!boss)spawnBoss();
+  const currentPhase=boss?3:elapsed<15?0:elapsed<30?1:2;
+  if(currentPhase!==phaseIndex){phaseIndex=currentPhase;
+    if(phaseIndex===1)floatLabel(W/2,H*.47,'第2波！ 強化して反撃！','#9ff4ff');
+    if(phaseIndex===2)floatLabel(W/2,H*.47,'第3波！ 敵の総攻撃！','#ffc28c');
+    hud();}
+  phaseNoteTime+=dt;
+  if(phaseNoteTime>.23){phaseNoteTime=0;hud();}
   flash=Math.max(0,flash-dt*3.2);screenShake=Math.max(0,screenShake-dt*15);
   const prevFever=Math.ceil(feverTime);
   if(feverTime>0)feverTime=Math.max(0,feverTime-dt);
@@ -331,6 +426,7 @@ function update(dt){
   player.targetX=clamp(player.targetX,26,W-26);
   player.x+=(player.targetX-player.x)*Math.min(1,dt*18);
   updateGates(dt);
+  updateBoss(dt);if(state!=='playing')return;
   spawnClock-=dt;
   if(spawnClock<=0){spawnEnemy();spawnClock=nextSpawnInterval();}
   shotClock-=dt;
@@ -338,6 +434,7 @@ function update(dt){
   for(let i=bullets.length-1;i>=0;i--){
     const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.y<-25||b.life<=0){bullets.splice(i,1);continue;}
+    if(bossDamage(b)){bullets.splice(i,1);if(state!=='playing')return;continue;}
     let hit=false;
     for(let j=enemies.length-1;j>=0;j--){
       const e=enemies[j],r=e.r+b.r+3;
@@ -346,7 +443,7 @@ function update(dt){
         if(e.hp<=0){
           if(blastCount>=6)burst(e.x,e.y,'#fff0a4',5,.65);
           enemies.splice(j,1);onDefeat(e);
-          if(kills>=GOAL&&elapsed>=MIN_SURVIVAL){bullets.splice(i,1);finish(true);return;}
+          // 通常兵を何体倒してもクリアにならない。勝利条件はボス撃破。
         }
         hit=true;break;
       }
@@ -361,9 +458,10 @@ function update(dt){
       if(hp<=0){finish(false);return;}
     }
   }
-  if(elapsed>=MIN_SURVIVAL&&kills>=GOAL){finish(true);return;}
   const close=enemies.some(e=>e.y>H*.65);
-  const message=close?'⚠️ 防衛線突破寸前！ゲートで反撃！':surgeActive()?'🔥 猛攻の波！強化しても敵が押し寄せる！':elapsed<8?'⚠️ 火力不足！最初のゲートまで耐えろ！':'⚡ 反撃のチャンス！次の猛攻に備えろ！';
+  const message=close?'⚠️ 防衛線突破寸前！ゲートで反撃！':boss?'🔥 ボスの赤い弾を避けて、ボスに集中砲火！':bossWarning?'⚠️ ボス接近！強化ゲートを逃すな！':surgeActive()?'🔥 猛攻の波！強化しても敵が押し寄せる！':elapsed<8?'⚠️ 火力不足！最初のゲートまで耐えろ！':'⚡ 反撃のチャンス！次の猛攻に備えろ！';
+  const threat=boss?'⚠ ボスの攻撃を回避！':close?'⚠ 敵が防衛線に接近':surgeActive()?'⚠ 猛攻中！':'次の波に備えよう';
+  if($.threat.textContent!==threat)$.threat.textContent=threat;
   if($.note.textContent!==message)$.note.textContent=message;
   for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.max(0,1-dt*2.1);p.vy*=Math.max(0,1-dt*2.1);if(p.life<=0)particles.splice(i,1);}
   for(let i=labels.length-1;i>=0;i--){const l=labels[i];l.life-=dt;l.y+=l.vy*dt;if(l.life<=0)labels.splice(i,1);}
@@ -433,15 +531,16 @@ function drawGate(g){
 }
 function drawEnemy(e){
   ctx.save();ctx.translate(e.x,e.y);const bob=Math.sin(t*9+e.phase)*2;ctx.translate(0,bob);
-  const tank=e.kind!=='normal',body=e.kind==='brute'?'#9f6dff':tank?'#f3a83f':'#fc4f72',edge=e.kind==='brute'?'#d5baff':tank?'#ffde91':'#ffa6ac';
+  const runner=e.kind==='runner',tank=e.kind==='armored'||e.kind==='brute',body=runner?'#5ce893':e.kind==='brute'?'#9f6dff':tank?'#f3a83f':'#fc4f72',edge=runner?'#d3ffe1':e.kind==='brute'?'#d5baff':tank?'#ffde91':'#ffa6ac';
   ctx.shadowColor=body;ctx.shadowBlur=9;
   ctx.strokeStyle='#531b38';ctx.lineWidth=3;ctx.lineCap='round';
   ctx.beginPath();ctx.moveTo(-5,6);ctx.lineTo(-9,15);ctx.moveTo(5,6);ctx.lineTo(9,15);ctx.moveTo(-9,-5);ctx.lineTo(-16,1);ctx.moveTo(9,-5);ctx.lineTo(16,1);ctx.stroke();
   roundRect(-9,-10,18,22,5,body,edge,1.3);
   ctx.beginPath();ctx.arc(0,-16,tank?9:8,0,TAU);ctx.fillStyle=tank?'#f6bd56':'#ff7188';ctx.fill();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke();
   ctx.shadowBlur=0;ctx.fillStyle='#281432';ctx.fillRect(-4,-18,2.8,2.5);ctx.fillRect(2,-18,2.8,2.5);
-  if(tank){
-    roundRect(-14,-8,5,16,2,'#fed079');roundRect(9,-8,5,16,2,'#fed079');
+  if(runner){ctx.fillStyle='#dcffe8';ctx.beginPath();ctx.moveTo(-8,-12);ctx.lineTo(-3,-22);ctx.lineTo(0,-12);ctx.closePath();ctx.fill();}
+  if(tank||runner){
+    if(tank){roundRect(-14,-8,5,16,2,'#fed079');roundRect(9,-8,5,16,2,'#fed079');}
     roundRect(-14,-28,28,4,2,'#16253d');roundRect(-14,-28,28*(e.hp/e.max),4,2,'#ffdd76');
   }
   ctx.restore();
@@ -474,6 +573,40 @@ function drawTurret(){
   ctx.fillStyle='#c6efff';ctx.font='900 11px sans-serif';ctx.textAlign='center';ctx.fillText('YOU',0,56);
   ctx.restore();
 }
+function drawBoss(){
+  if(!boss)return;
+  const q=boss;ctx.save();ctx.translate(q.x,q.y);
+  const pulse=1+Math.sin(t*5)*.035;
+  ctx.scale(pulse,pulse);
+  ctx.shadowColor='#ff356a';ctx.shadowBlur=18;
+  ctx.strokeStyle='#ff5b8c';ctx.lineWidth=4;
+  // 左右の大きな装甲翼
+  roundRect(-74,-27,43,48,13,'#5c204e','#fa6397',3);
+  roundRect(31,-27,43,48,13,'#5c204e','#fa6397',3);
+  ctx.beginPath();ctx.moveTo(-75,-5);ctx.lineTo(-95,18);ctx.lineTo(-66,18);ctx.moveTo(75,-5);ctx.lineTo(95,18);ctx.lineTo(66,18);ctx.stroke();
+  roundRect(-43,-41,86,92,18,q.hitFlash>0?'#ffd0c2':'#5b2a60','#ff84a7',4);
+  roundRect(-30,-58,60,35,10,'#3e204c','#ffb5b4',3);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#ffbd83';ctx.fillRect(-22,-48,13,7);ctx.fillRect(9,-48,13,7);
+  ctx.shadowColor='#ffb663';ctx.shadowBlur=16;
+  ctx.fillStyle=q.hitFlash>0?'#fff8db':'#ff775c';ctx.beginPath();ctx.arc(0,4,22,0,TAU);ctx.fill();
+  ctx.strokeStyle='#ffd78a';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,4,29,0,TAU);ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.font='900 11px system-ui,sans-serif';ctx.fillStyle='#fff6eb';ctx.textAlign='center';ctx.fillText('OVERLORD',0,-70);
+  // ボスの直上に体力ゲージ。HUDにも表示して見失わないようにする。
+  roundRect(-55,58,110,10,5,'#33182c','#ff8da6',1.2);
+  roundRect(-53,60,106*q.hp/q.max,6,3,'#ff7383');
+  ctx.restore();
+}
+function drawBossShots(){
+  for(const z of bossShots){
+    ctx.save();ctx.globalAlpha=.24;ctx.fillStyle='#ff72a7';
+    ctx.fillRect(z.x-14,z.y,28,Math.max(0,player.y-z.y));
+    ctx.shadowColor='#ff366d';ctx.shadowBlur=16;
+    ctx.fillStyle='#ff487a';ctx.beginPath();ctx.arc(z.x,z.y,z.r+Math.sin(t*12)*2,0,TAU);ctx.fill();
+    ctx.strokeStyle='#ffdbb4';ctx.lineWidth=2.4;ctx.stroke();ctx.restore();
+  }
+}
 function drawParticles(){
   for(const s of shocks){
     ctx.save();ctx.globalAlpha=clamp(s.life/s.maxLife,0,1)*.8;
@@ -484,18 +617,37 @@ function drawParticles(){
   ctx.globalAlpha=1;
   for(const l of labels){ctx.save();ctx.globalAlpha=clamp(l.life/l.maxLife,0,1);ctx.font='900 17px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#04152c';ctx.strokeText(l.text,l.x,l.y);ctx.fillStyle=l.color;ctx.fillText(l.text,l.x,l.y);ctx.restore();}
 }
+function drawVictory(){
+  if(state!=='victory')return;
+  ctx.save();
+  ctx.fillStyle='rgba(255,178,80,'+(Math.max(0,victoryTimer)/1.35*.12)+')';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.lineWidth=5;ctx.strokeStyle='#562e25';
+  ctx.shadowColor='#ffe197';ctx.shadowBlur=24;
+  ctx.font='1000 38px system-ui,sans-serif';
+  ctx.strokeText('BOSS BREAK!',W/2,H*.47);
+  ctx.fillStyle='#fff1a1';ctx.fillText('BOSS BREAK!',W/2,H*.47);
+  ctx.font='900 18px system-ui,sans-serif';ctx.fillStyle='#e8fff8';ctx.fillText('MISSION COMPLETE',W/2,H*.54);
+  ctx.restore();
+}
 function draw(){
   ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
   ctx.save();if(screenShake>0)ctx.translate(rand(-screenShake,screenShake),rand(-screenShake,screenShake));
   drawBackdrop();gates.slice().sort((a,b)=>a.y-b.y).forEach(drawGate);
+  drawBoss();
   for(const e of enemies)drawEnemy(e);
+  drawBossShots();
   for(const b of bullets)drawBullet(b);
-  drawTurret();drawParticles();ctx.restore();
+  drawTurret();drawParticles();drawVictory();ctx.restore();
 }
 function frame(now){
   const dt=Math.min(.04,Math.max(0,(now-last)/1000||0));last=now;
   if(state==='playing')update(dt);
-  else if(state==='ready')t+=dt*.15;
+  else if(state==='victory'){
+    t+=dt;victoryTimer-=dt;
+    for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.life<=0)particles.splice(i,1);}
+    for(let i=shocks.length-1;i>=0;i--){const q=shocks[i];q.life-=dt;q.r+=(q.maxR-q.r)*Math.min(1,dt*16);if(q.life<=0)shocks.splice(i,1);}
+    if(victoryTimer<=0){state='ended';$.end.classList.remove('hidden');}
+  }else if(state==='ready')t+=dt*.15;
   draw();requestAnimationFrame(frame);
 }
 function setTarget(clientX){
@@ -531,7 +683,7 @@ resize();player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
 gates=[{pair:0,x:105,y:H*.48,w:116,h:78,name:'+2',caption:'弾数UP',kind:'multi',glow:0,speed:GATE_SPEED,bonus:{value:2}},{pair:0,x:285,y:H*.48,w:116,h:78,name:'⚡+1',caption:'連射UP',kind:'rapid',glow:0,speed:GATE_SPEED}];
 hud();last=performance.now();requestAnimationFrame(frame);
 // 開発時の動作確認向け。ゲーム操作には不要。
-window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,combo,bestCombo,feverTime:+feverTime.toFixed(2),surge:surgeActive(),minSurvival:MIN_SURVIVAL,maxBullets:260,shocks:shocks.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:+elapsed.toFixed(1),height:H,gateClock:+gateClock.toFixed(2),gates:gates.map(g=>({pair:g.pair,kind:g.kind,x:g.x,y:Math.round(g.y),speed:g.speed}))});
+window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,enemyKinds:enemies.reduce((o,e)=>(o[e.kind]=(o[e.kind]||0)+1,o),{}),bulletCount:bullets.length,combo,bestCombo,feverTime:+feverTime.toFixed(2),surge:surgeActive(),phaseIndex,bossTime:BOSS_TIME,boss:boss?{hp:boss.hp,max:boss.max,x:Math.round(boss.x),y:Math.round(boss.y),entered:boss.entered}:null,bossShots:bossShots.length,maxBullets:260,shocks:shocks.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:+elapsed.toFixed(1),height:H,gateClock:+gateClock.toFixed(2),gates:gates.map(g=>({pair:g.pair,kind:g.kind,x:g.x,y:Math.round(g.y),speed:g.speed}))});
 })();
 </script>
 </body>
