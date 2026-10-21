@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#080e24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NEON DEFENSE | スマホ対応版 Ver.0.2</title>
+<style>
+  :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#050b1c; }
+  body { display:flex; justify-content:center; align-items:center; background:radial-gradient(ellipse at 50% 50%, #112546, #030612 70%); }
+  #game { position:relative; width:min(100%, 460px); height:100vh; height:100svh; height:100dvh; overflow:hidden; background:#0b1430; isolation:isolate; touch-action:none; user-select:none; -webkit-user-select:none; }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+  #game::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none; box-shadow:inset 0 0 80px rgba(0,0,0,.32); }
+  .hud { position:absolute; left:0; right:0; top:0; z-index:3; padding:calc(env(safe-area-inset-top) + 12px) 15px 0; pointer-events:none; }
+  .hudTop { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .logo { font-size:12px; font-weight:950; letter-spacing:1.6px; color:#bafcff; text-shadow:0 0 15px #18d5ff9b; white-space:nowrap; }
+  .hudBtns { display:flex; gap:7px; pointer-events:auto; }
+  .iconBtn { border:1px solid #c3efff50; background:#091b36cc; color:#e5f8ff; min-width:38px; height:35px; border-radius:11px; font-size:17px; display:grid; place-items:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .iconBtn:active { transform:scale(.96); }
+  .stats { display:flex; gap:7px; margin-top:10px; }
+  .stat { flex:1; min-width:0; background:#081b38cb; border:1px solid #8ec0ed3b; padding:9px 6px 8px; border-radius:12px; text-align:center; backdrop-filter:blur(5px); }
+  .statLabel { display:block; font-size:10px; font-weight:700; color:#acc8df; margin-bottom:3px; white-space:nowrap; }
+  .statValue { display:block; font-size:20px; line-height:1.15; font-weight:950; letter-spacing:.3px; font-variant-numeric:tabular-nums; }
+  #statBlasters { color:#68edff; } #statRapid { color:#ffdc6a; } #statBase { color:#ff8499; }
+  .progressWrap { margin-top:9px; display:flex; align-items:center; gap:10px; }
+  .progressBg { height:7px; border-radius:8px; overflow:hidden; background:#162b4d; box-shadow:inset 0 1px 4px #0006; flex:1; border:1px solid #ffffff12; }
+  .progressFill { height:100%; width:0%; border-radius:8px; background:linear-gradient(90deg,#27cfe9,#76ffc0); box-shadow:0 0 12px #42ffc7; transition:width .15s linear; }
+  #killLabel { color:#e6f9ff; font-size:11px; font-weight:900; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .bottomNote { z-index:2; position:absolute; bottom:calc(env(safe-area-inset-bottom) + 10px); left:0; right:0; text-align:center; color:#9fc9e7a0; font-size:11px; letter-spacing:.5px; pointer-events:none; }
+  .overlay { position:absolute; z-index:5; inset:0; padding:32px 24px calc(env(safe-area-inset-bottom) + 28px); display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071025e8,#06172ce0); backdrop-filter:blur(9px); text-align:center; }
+  /* 小型iPhoneや横画面でもスタートボタンが画面外に隠れないようにする */
+  .overlay { overflow-y:auto; -webkit-overflow-scrolling:touch; touch-action:pan-y; justify-content:safe center; }
+  .overlay .panel { margin:auto 0; flex:none; }
+  .overlay.hidden { display:none; }
+  .panel { width:100%; max-width:350px; border:1px solid #9bd9ff5b; border-radius:25px; background:linear-gradient(155deg,#12345df2,#091a35f5); padding:29px 19px 23px; box-shadow:0 18px 70px #0009, inset 0 1px #c4f1ff1c; }
+  .tag { color:#8ff5ff; border:1px solid #70dfff80; border-radius:99px; padding:6px 12px; font-size:11px; font-weight:900; letter-spacing:1px; display:inline-block; }
+  h1 { margin:20px 0 6px; color:#fff; letter-spacing:1.1px; font-size:clamp(26px,8vw,38px); font-weight:1000; text-shadow:0 0 20px #18d5ff88; line-height:1.1; }
+  .subtitle { color:#9eeeff; font-size:13px; letter-spacing:1.2px; font-weight:900; margin-top:0; }
+  .lead { font-size:14px; color:#e3f5ff; line-height:1.8; margin:18px 0; }
+  .howto { display:grid; gap:8px; text-align:left; background:#04142d9c; border-radius:14px; padding:14px 13px; margin:15px 0 22px; }
+  .howto div { font-size:13px; color:#dbeefa; line-height:1.45; }
+  .howto span { font-size:17px; display:inline-block; width:25px; vertical-align:middle; }
+  .primary { width:100%; min-height:52px; border:0; border-radius:15px; color:#062137; font-weight:1000; font-size:17px; background:linear-gradient(120deg,#7dfbe3,#69c9ff); box-shadow:0 6px 24px #39caff55; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .primary:active { transform:scale(.98); }
+  .small { color:#9fbcd2; font-size:11px; line-height:1.6; margin:14px 0 0; }
+  #endTitle { font-size:32px; } #endMsg { margin-bottom:22px; }
+  .mobileTip {display:none;font-size:11px;line-height:1.55;padding:9px 11px;margin:12px 0 0;background:#0a2542;border:1px solid #6fe4ff60;border-radius:10px;color:#c1eaff;}
+  #errorBox {position:absolute;z-index:12;inset:auto 15px 15px;display:none;background:#381526;border:1px solid #ff8daa;color:#fff;border-radius:13px;padding:15px;font-size:13px;line-height:1.6;}
+  @media (hover:none) and (pointer:coarse) {.mobileTip {display:block;}}
+  @media (max-height:650px) { .panel { padding:17px 16px; } h1 {margin:10px 0 4px;font-size:27px;} .howto{padding:10px;margin:9px 0 12px;} .lead{margin:9px 0;} }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="field" aria-label="敵を撃退するアクションゲーム"></canvas>
+  <div class="hud">
+    <div class="hudTop">
+      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.2</span></div>
+      <div class="hudBtns">
+        <button id="soundBtn" class="iconBtn" aria-label="音を切り替える" title="効果音">♫̸</button>
+        <button id="pauseBtn" class="iconBtn" aria-label="一時停止" title="一時停止">Ⅱ</button>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span class="statLabel">🔫 弾数</span><strong class="statValue" id="statBlasters">×1</strong></div>
+      <div class="stat"><span class="statLabel">⚡ 連射</span><strong class="statValue" id="statRapid">Lv.1</strong></div>
+      <div class="stat"><span class="statLabel">🛡️ 基地HP</span><strong class="statValue" id="statBase">8</strong></div>
+    </div>
+    <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">0 / 35 撃破</span></div>
+  </div>
+  <div class="bottomNote">指で左右にスライドして、大砲を移動！</div>
+  <div id="startOverlay" class="overlay">
+    <div class="panel">
+      <span class="tag">たかしくん × オールマイト 第1号</span>
+      <h1>NEON<br>DEFENSE</h1>
+      <p class="subtitle">ネオン・ディフェンス</p>
+      <p class="lead">迫り来る敵を撃退せよ！<br>ゲートを撃って武器を強化！</p>
+      <div class="howto">
+        <div><span>👆</span> 指を左右に動かして大砲を操作</div>
+        <div><span>💥</span> 弾は自動で連続発射！</div>
+        <div><span>🔵</span> 「＋1」を撃つと弾数アップ</div>
+        <div><span>⚡</span> 「連射」を撃つと発射速度アップ</div>
+        <div><span>🛡️</span> 敵35体を倒せばクリア！</div>
+      </div>
+      <button class="primary" id="startBtn">▶ ゲームスタート</button>
+      <p class="mobileTip">📱 iPhoneでは公開したURLをSafariで開いて遊ぼう。「ファイル」アプリのプレビューでは動作しない場合があります。</p>
+      <p class="small">iPhone・PC対応 / Web公開してプレイ推奨<br>最初の試作品なので、ここから改良していくぞ！</p>
+    </div>
+  </div>
+  <div id="endOverlay" class="overlay hidden">
+    <div class="panel">
+      <span class="tag" id="endTag">MISSION COMPLETE</span>
+      <h1 id="endTitle">クリア！</h1>
+      <p class="lead" id="endMsg"></p>
+      <button class="primary" id="restartBtn">↻ もう一度プレイ</button>
+      <p class="small">パワーアップを狙って、もっと上手に撃退しよう！</p>
+    </div>
+  </div>
+  <div id="pauseOverlay" class="overlay hidden">
+    <div class="panel">
+      <span class="tag">PAUSE</span>
+      <h1 style="font-size:30px">一時停止中</h1>
+      <p class="lead">準備ができたら戦闘再開！</p>
+      <button class="primary" id="resumeBtn">▶ 再開する</button>
+    </div>
+  </div>
+  <div id="errorBox" role="alert"></div>
+</div>
+<script>
+(() => {
+'use strict';
+const canvas=document.getElementById('field'), ctx=canvas.getContext('2d',{alpha:false});
+if(!ctx){document.body.innerHTML='<p style="color:white;padding:30px;text-align:center">このブラウザはゲーム描画に対応していません。iPhoneのSafariで公開URLを開いてください。</p>';return;}
+// スマホで万一描画エラーが起きたとき、何も起きない状態にしない。
+window.addEventListener('error',e=>{
+  const errorBox=document.getElementById('errorBox');
+  if(errorBox){errorBox.style.display='block';errorBox.textContent='画面の描画中に問題が発生しました。Safariを最新にして再読み込みしてください。 （'+(e.message||'不明なエラー')+'）';}
+});
+const app=document.getElementById('game');
+const el=id=>document.getElementById(id);
+const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
+const W=390, GOAL=35, TAU=Math.PI*2;
+let H=800, scale=1, dpr=1, last=0, state='ready', pointerDown=false, keyboard=0;
+let t=0, elapsed=0, spawnClock=0, shotClock=0, idSeq=0, flash=0, screenShake=0;
+let player, bullets=[], enemies=[], particles=[], labels=[], gates=[], kills=0, maxHP=8, hp=8, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
+const rand=(a,b)=>a+Math.random()*(b-a), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const rgba=(hex,opacity)=>hex;
+function resize(){
+  const rect=app.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  scale=rect.width/W;
+  H=rect.height/scale;
+  // 高解像度iPhoneでは負荷を抑え、描画が重くなりにくい設定にする。
+  dpr=Math.min(window.devicePixelRatio||1,matchMedia('(pointer:coarse)').matches?1.5:2);
+  canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  if(player) player.y=H*.87;
+  if(gates.length) gates.forEach(g=>g.y=H*.49);
+}
+function hud(){
+  $.blasters.textContent='×'+blastCount;
+  $.rapid.textContent='Lv.'+rapidLevel;
+  $.base.textContent=hp;
+  $.kills.textContent=kills+' / '+GOAL+' 撃破';
+  $.progress.style.width=Math.min(100,kills/GOAL*100)+'%';
+  $.base.style.color=hp<=3?'#ff596e':'#ff8499';
+}
+function newGame(){
+  t=0;elapsed=0;spawnClock=1.2;shotClock=.1;idSeq=0;flash=0;screenShake=0;
+  player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
+  bullets=[];enemies=[];particles=[];labels=[];kills=0;hp=maxHP;blastCount=1;rapidLevel=1;
+  gates=[
+    {x:111,y:H*.49,w:96,h:86,name:'+1',caption:'弾数UP',kind:'multi',need:5,hits:0,cool:0,glow:0},
+    {x:279,y:H*.49,w:96,h:86,name:'⚡',caption:'連射UP',kind:'rapid',need:7,hits:0,cool:0,glow:0}
+  ];
+  hud();$.start.classList.add('hidden');$.end.classList.add('hidden');$.pause.classList.add('hidden');
+  state='playing'; last=performance.now();
+}
+function pause(){if(state!=='playing')return;state='paused';$.pause.classList.remove('hidden');}
+function resume(){if(state!=='paused')return;state='playing';$.pause.classList.add('hidden');last=performance.now();}
+function finish(win){
+  if(state!=='playing')return;
+  state='ended';$.end.classList.remove('hidden');
+  el('endTag').textContent=win?'MISSION COMPLETE':'GAME OVER';
+  el('endTitle').textContent=win?'クリア！！':'基地が突破された！';
+  el('endMsg').innerHTML=win?'敵35体を撃退した！<br>君の勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>ゲートを狙って強化し、もう一度挑戦！';
+  if(win){burst(W/2,H*.35,'#86ffda',75,5);beep(620,.2,'triangle');}
+  else beep(140,.4,'sawtooth');
+}
+function beep(freq=400,dur=.045,type='sine',vol=.02){
+  if(!soundOn)return;
+  try{
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain(),at=audioCtx.currentTime;
+    o.type=type;o.frequency.setValueAtTime(freq,at);o.frequency.exponentialRampToValueAtTime(Math.max(60,freq*.66),at+dur);
+    g.gain.setValueAtTime(vol,at);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
+    o.connect(g);g.connect(audioCtx.destination);o.start(at);o.stop(at+dur);
+  }catch(e){}
+}
+function burst(x,y,color,n=9,power=1){
+  for(let i=0;i<n;i++){
+    const a=rand(0,TAU),s=rand(50,190)*power;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.25,.7),maxLife:.7,r:rand(1.2,4.2)*power,color});
+  }
+  if(particles.length>290)particles.splice(0,particles.length-290);
+}
+function floatLabel(x,y,text,color='#adfaff'){
+  labels.push({x,y,vy:-45,life:1.1,maxLife:1.1,text,color});
+}
+function spawnEnemy(){
+  const armored=elapsed>10 && Math.random()<.18;
+  const x=rand(25,W-25);
+  const speed=rand(47,74)+Math.min(elapsed*.16,14);
+  const en={id:++idSeq,x,y:-35,vx:rand(-7,7),speed,r:armored?16:12,hp:armored?3:1,max:armored?3:1,kind:armored?'armored':'normal',phase:rand(0,TAU)};
+  enemies.push(en);
+  if(elapsed>18&&Math.random()<.26){
+    enemies.push({id:++idSeq,x:clamp(x+rand(-42,42),22,W-22),y:-70,vx:rand(-5,5),speed:speed*1.05,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
+  }
+}
+function fire(){
+  const step=clamp(11,7,13);
+  for(let i=0;i<blastCount;i++){
+    const dx=(i-(blastCount-1)/2)*step;
+    bullets.push({x:player.x+dx,y:player.y-41,vx:dx*.09,vy:-650,r:4.0,life:1.7});
+  }
+  if(bullets.length>190)bullets.splice(0,bullets.length-190);
+  player.recoil=1;
+  beep(600,.026,'square',.009);
+}
+function hitGate(g,b){
+  if(g.cool>0|| (g.kind==='multi'&&blastCount>=8) || (g.kind==='rapid'&&rapidLevel>=5))return false;
+  if(Math.abs(b.x-g.x)>g.w*.5||Math.abs(b.y-g.y)>g.h*.5)return false;
+  g.hits++;g.glow=1;
+  burst(b.x,b.y,g.kind==='multi'?'#67e9ff':'#ffe07f',4,.44);
+  if(g.hits>=g.need){
+    g.hits=0;g.cool=3.3;
+    if(g.kind==='multi'){
+      blastCount=Math.min(blastCount+1,8);floatLabel(g.x,g.y-54,'弾数 ＋１','#75faff');
+    } else {
+      rapidLevel=Math.min(rapidLevel+1,5);floatLabel(g.x,g.y-54,'連射UP！','#ffe17e');
+    }
+    burst(g.x,g.y,g.kind==='multi'?'#73eeff':'#ffdc6e',22,1.25);
+    screenShake=Math.max(screenShake,4);
+    beep(850,.2,'triangle',.065);hud();
+  }
+  return true;
+}
+function update(dt){
+  t+=dt;elapsed+=dt;
+  flash=Math.max(0,flash-dt*3.2);screenShake=Math.max(0,screenShake-dt*14);
+  player.recoil=Math.max(0,player.recoil-dt*8);
+  if(keyboard)player.targetX+=keyboard*dt*255;
+  player.targetX=clamp(player.targetX,26,W-26);
+  player.x+=(player.targetX-player.x)*Math.min(1,dt*18);
+  for(const g of gates){g.cool=Math.max(0,g.cool-dt);g.glow=Math.max(0,g.glow-dt*3);}
+  spawnClock-=dt;
+  if(spawnClock<=0){spawnEnemy();spawnClock=clamp(.94-elapsed*.006,.43,.94)*rand(.82,1.1);}
+  shotClock-=dt;
+  if(shotClock<=0){fire();shotClock=Math.max(.105,.265-(rapidLevel-1)*.036);}
+  for(let i=bullets.length-1;i>=0;i--){
+    const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+    if(b.y<-25||b.life<=0){bullets.splice(i,1);continue;}
+    let hit=false;
+    for(const g of gates){if(hitGate(g,b)){hit=true;break;}}
+    if(hit){bullets.splice(i,1);continue;}
+    for(let j=enemies.length-1;j>=0;j--){
+      const e=enemies[j],r=e.r+b.r+3;
+      if(Math.abs(b.x-e.x)<r&&Math.abs(b.y-e.y)<r&&((b.x-e.x)**2+(b.y-e.y)**2)<r*r){
+        e.hp--;burst(b.x,b.y,'#ffb565',5,.6);beep(185,.05,'triangle',.023);
+        if(e.hp<=0){
+          burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',14,.85);
+          enemies.splice(j,1);kills++;hud();floatLabel(e.x,e.y-12,'+1','#e3ffe9');
+          if(kills>=GOAL){bullets.splice(i,1);finish(true);return;}
+        }
+        hit=true;break;
+      }
+    }
+    if(hit)bullets.splice(i,1);
+  }
+  for(let i=enemies.length-1;i>=0;i--){
+    const e=enemies[i];e.y+=e.speed*dt;e.x=clamp(e.x+Math.sin(t*2+e.phase)*e.vx*dt,18,W-18);
+    if(e.y>H*.82){
+      enemies.splice(i,1);hp=Math.max(0,hp-1);hud();flash=.85;screenShake=7;
+      burst(e.x,H*.82,'#ff738f',24,1.1);floatLabel(e.x,H*.78,'基地 −１','#ff8196');beep(90,.2,'sawtooth',.06);
+      if(hp<=0){finish(false);return;}
+    }
+  }
+  for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.max(0,1-dt*2.1);p.vy*=Math.max(0,1-dt*2.1);if(p.life<=0)particles.splice(i,1);}
+  for(let i=labels.length-1;i>=0;i--){const l=labels[i];l.life-=dt;l.y+=l.vy*dt;if(l.life<=0)labels.splice(i,1);}
+}
+function roundRect(x,y,w,h,r,fill,stroke=null,lineWidth=1){
+  ctx.beginPath();
+  // iOS Safari 16.3以前など、canvas.roundRect が未対応でも描けるようにする。
+  if(typeof ctx.roundRect==='function') ctx.roundRect(x,y,w,h,r);
+  else {
+    const rr=Math.max(0,Math.min(r,w/2,h/2));
+    ctx.moveTo(x+rr,y);ctx.lineTo(x+w-rr,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+rr);
+    ctx.lineTo(x+w,y+h-rr);ctx.quadraticCurveTo(x+w,y+h,x+w-rr,y+h);
+    ctx.lineTo(x+rr,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-rr);
+    ctx.lineTo(x,y+rr);ctx.quadraticCurveTo(x,y,x+rr,y);
+    ctx.closePath();
+  }
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lineWidth;ctx.stroke();}
+}
+function drawBackdrop(){
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#07112d');bg.addColorStop(.5,'#122c4d');bg.addColorStop(1,'#050f29');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<48;i++){
+    const x=((i*87.7+17)%W),y=((i*157+Math.floor(t*8))%(H+80))-40;
+    ctx.fillStyle=i%3===0?'#87f1ff36':'#8f9efc28';ctx.fillRect(x,y,1.6,1.6);
+  }
+  const top=H*.25;
+  ctx.beginPath();ctx.moveTo(67,top);ctx.lineTo(W-67,top);ctx.lineTo(W+36,H);ctx.lineTo(-36,H);ctx.closePath();
+  const ground=ctx.createLinearGradient(0,top,0,H);ground.addColorStop(0,'#203b61');ground.addColorStop(1,'#123454');ctx.fillStyle=ground;ctx.fill();
+  ctx.strokeStyle='#60d8ff37';ctx.lineWidth=4;ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.moveTo(67,top);ctx.lineTo(W-67,top);ctx.lineTo(W+36,H);ctx.lineTo(-36,H);ctx.closePath();ctx.clip();
+  for(let i=0;i<15;i++){
+    const q=((i/15+t*.1)%1);const y=top+(H-top)*q*q;
+    ctx.strokeStyle='rgba(110,192,240,'+(0.05+q*.18)+')';ctx.lineWidth=1+q*1.6;
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+  }
+  for(let i=-2;i<=2;i++){
+    const xe=W/2+i*36;
+    ctx.beginPath();ctx.moveTo(W/2+i*19,top);ctx.lineTo(xe,H);ctx.strokeStyle='#68b5e91f';ctx.lineWidth=1.5;ctx.stroke();
+  }
+  ctx.restore();
+  const lineY=H*.82;
+  ctx.fillStyle='#6fdefb22';ctx.fillRect(0,lineY-13,W,25);
+  ctx.shadowColor='#75f8ff';ctx.shadowBlur=20;ctx.fillStyle='#51edff';ctx.fillRect(9,lineY-2,W-18,3);ctx.shadowBlur=0;
+  ctx.fillStyle='#bbfaff';ctx.font='bold 10px sans-serif';ctx.textAlign='left';ctx.fillText('DEFENSE LINE',14,lineY-10);
+  if(flash){ctx.fillStyle='rgba(255,46,87,'+(flash*.16)+')';ctx.fillRect(0,0,W,H);}
+}
+function drawGate(g){
+  const maxed=(g.kind==='multi'&&blastCount>=8)||(g.kind==='rapid'&&rapidLevel>=5);
+  const inactive=g.cool>0||maxed;
+  const x=g.x-g.w/2,y=g.y-g.h/2;
+  ctx.save();
+  ctx.shadowBlur=inactive?3:15+g.glow*21;ctx.shadowColor=g.kind==='multi'?'#33e6ff':'#ffe177';
+  roundRect(x,y,g.w,g.h,12,inactive?'#253c57bd':g.kind==='multi'?'#0d579cba':'#825619c7',inactive?'#779eb860':g.kind==='multi'?'#63edff':'#ffd66f',2);
+  ctx.shadowBlur=0;
+  ctx.fillStyle=inactive?'#7594ac':g.kind==='multi'?'#d4faff':'#fff2aa';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 36px system-ui,sans-serif';
+  ctx.fillText(maxed?'✓':g.name,g.x,g.y-14);
+  ctx.font='800 13px system-ui,sans-serif';ctx.fillText(maxed?'MAX':g.caption,g.x,g.y+19);
+  const barW=g.w-18;
+  roundRect(g.x-barW/2,g.y+34,barW,5,4,'#071c339e');
+  if(!inactive&&g.hits>0){roundRect(g.x-barW/2,g.y+34,barW*g.hits/g.need,5,4,g.kind==='multi'?'#73eaff':'#ffdf7d');}
+  if(inactive&&!maxed){ctx.font='bold 11px system-ui,sans-serif';ctx.fillStyle='#ffffffce';ctx.fillText('充電中',g.x,g.y+37);}
+  ctx.restore();
+}
+function drawEnemy(e){
+  ctx.save();ctx.translate(e.x,e.y);const bob=Math.sin(t*9+e.phase)*2;ctx.translate(0,bob);
+  const tank=e.kind==='armored',body=tank?'#f3a83f':'#fc4f72',edge=tank?'#ffde91':'#ffa6ac';
+  ctx.shadowColor=body;ctx.shadowBlur=9;
+  ctx.strokeStyle='#531b38';ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-5,6);ctx.lineTo(-9,15);ctx.moveTo(5,6);ctx.lineTo(9,15);ctx.moveTo(-9,-5);ctx.lineTo(-16,1);ctx.moveTo(9,-5);ctx.lineTo(16,1);ctx.stroke();
+  roundRect(-9,-10,18,22,5,body,edge,1.3);
+  ctx.beginPath();ctx.arc(0,-16,tank?9:8,0,TAU);ctx.fillStyle=tank?'#f6bd56':'#ff7188';ctx.fill();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle='#281432';ctx.fillRect(-4,-18,2.8,2.5);ctx.fillRect(2,-18,2.8,2.5);
+  if(tank){
+    roundRect(-14,-8,5,16,2,'#fed079');roundRect(9,-8,5,16,2,'#fed079');
+    roundRect(-14,-28,28,4,2,'#16253d');roundRect(-14,-28,28*(e.hp/e.max),4,2,'#ffdd76');
+  }
+  ctx.restore();
+}
+function drawBullet(b){
+  ctx.save();ctx.shadowBlur=15;ctx.shadowColor='#5af8ff';
+  ctx.strokeStyle='#30caff';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(b.x,b.y+13);ctx.lineTo(b.x,b.y-3);ctx.stroke();
+  ctx.fillStyle='#e4ffff';ctx.beginPath();ctx.ellipse(b.x,b.y-3,3.4,6,0,0,TAU);ctx.fill();ctx.restore();
+}
+function drawTurret(){
+  const x=player.x,y=player.y;
+  ctx.save();ctx.translate(x,y);
+  const halo=ctx.createRadialGradient(0,10,5,0,10,75);halo.addColorStop(0,'#42d5ff55');halo.addColorStop(1,'#42d5ff00');ctx.fillStyle=halo;ctx.beginPath();ctx.arc(0,10,75,0,TAU);ctx.fill();
+  ctx.shadowColor='#34dfff';ctx.shadowBlur=12;
+  ctx.lineWidth=5;ctx.strokeStyle='#3ac8ff83';ctx.beginPath();ctx.ellipse(0,21,40,18,0,0,TAU);ctx.stroke();ctx.shadowBlur=0;
+  roundRect(-28,0,56,36,13,'#124f89','#6fe0ff',2);
+  roundRect(-23,7,46,26,9,'#1d386a','#396da8',2);
+  const barrelN=Math.min(blastCount,5),center=(barrelN-1)/2;
+  for(let i=0;i<barrelN;i++){
+    const bx=(i-center)*11;
+    roundRect(bx-5,-35+player.recoil*3,10,42,4,'#286ab1','#90eaff',1.6);
+    roundRect(bx-3,-36+player.recoil*3,6,8,2,'#bdfaff');
+  }
+  ctx.fillStyle='#6ee5ff';ctx.beginPath();ctx.arc(0,17,12,0,TAU);ctx.fill();ctx.fillStyle='#082942';ctx.beginPath();ctx.arc(0,17,7,0,TAU);ctx.fill();
+  ctx.fillStyle='#c6efff';ctx.font='900 11px sans-serif';ctx.textAlign='center';ctx.fillText('YOU',0,56);
+  ctx.restore();
+}
+function drawParticles(){
+  for(const p of particles){ctx.globalAlpha=clamp(p.life/p.maxLife,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();}
+  ctx.globalAlpha=1;
+  for(const l of labels){ctx.save();ctx.globalAlpha=clamp(l.life/l.maxLife,0,1);ctx.font='900 17px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#04152c';ctx.strokeText(l.text,l.x,l.y);ctx.fillStyle=l.color;ctx.fillText(l.text,l.x,l.y);ctx.restore();}
+}
+function draw(){
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  ctx.save();if(screenShake>0)ctx.translate(rand(-screenShake,screenShake),rand(-screenShake,screenShake));
+  drawBackdrop();gates.forEach(drawGate);
+  for(const e of enemies)drawEnemy(e);
+  for(const b of bullets)drawBullet(b);
+  drawTurret();drawParticles();ctx.restore();
+}
+function frame(now){
+  const dt=Math.min(.04,Math.max(0,(now-last)/1000||0));last=now;
+  if(state==='playing')update(dt);
+  else if(state==='ready')t+=dt*.15;
+  draw();requestAnimationFrame(frame);
+}
+function setTarget(clientX){
+  if(state!=='playing')return;
+  const rect=canvas.getBoundingClientRect();
+  player.targetX=clamp((clientX-rect.left)/rect.width*W,25,W-25);
+}
+// Pointer Events はPC・新しいスマホ用。古いSafari向けにTouch Eventsも併用。
+canvas.addEventListener('pointerdown',e=>{pointerDown=true;try{canvas.setPointerCapture(e.pointerId);}catch(err){}setTarget(e.clientX);});
+canvas.addEventListener('pointermove',e=>{if(pointerDown||(e.pointerType==='mouse'&&e.buttons===1))setTarget(e.clientX);});
+window.addEventListener('pointerup',()=>pointerDown=false);
+window.addEventListener('pointercancel',()=>pointerDown=false);
+canvas.addEventListener('touchstart',e=>{if(e.touches.length){pointerDown=true;setTarget(e.touches[0].clientX);}if(e.cancelable)e.preventDefault();},{passive:false});
+canvas.addEventListener('touchmove',e=>{if(e.touches.length)setTarget(e.touches[0].clientX);if(e.cancelable)e.preventDefault();},{passive:false});
+canvas.addEventListener('touchend',()=>{pointerDown=false;},{passive:true});
+canvas.addEventListener('touchcancel',()=>{pointerDown=false;},{passive:true});
+// マウスのみ使える古い環境にも対応。
+canvas.addEventListener('mousedown',e=>{pointerDown=true;setTarget(e.clientX);});
+canvas.addEventListener('mousemove',e=>{if(pointerDown)setTarget(e.clientX);});
+window.addEventListener('mouseup',()=>pointerDown=false);
+window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')keyboard=-1;if(e.key==='ArrowRight'||e.key==='d')keyboard=1;if((e.key===' '||e.key==='Escape')&&state==='playing'){pause();e.preventDefault();}else if((e.key===' '||e.key==='Escape')&&state==='paused'){resume();e.preventDefault();}});
+window.addEventListener('keyup',e=>{if(['ArrowLeft','ArrowRight','a','d'].includes(e.key))keyboard=0;});
+el('startBtn').addEventListener('click',newGame);
+el('restartBtn').addEventListener('click',newGame);
+el('resumeBtn').addEventListener('click',resume);
+$.pauseBtn.addEventListener('click',()=>state==='playing'?pause():state==='paused'?resume():null);
+$.sound.addEventListener('click',()=>{soundOn=!soundOn;$.sound.textContent=soundOn?'♫':'♫̸';if(soundOn)beep(650,.11,'sine',.03);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+window.addEventListener('resize',resize);
+window.addEventListener('orientationchange',()=>{requestAnimationFrame(resize);});
+if(window.visualViewport)window.visualViewport.addEventListener('resize',resize);
+resize();player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
+gates=[{x:111,y:H*.49,w:96,h:86,name:'+1',caption:'弾数UP',kind:'multi',need:5,hits:0,cool:0,glow:0},{x:279,y:H*.49,w:96,h:86,name:'⚡',caption:'連射UP',kind:'rapid',need:7,hits:0,cool:0,glow:0}];
+hud();last=performance.now();requestAnimationFrame(frame);
+// 開発時の動作確認向け。ゲーム操作には不要。
+window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:Math.round(elapsed),height:H});
+})();
+</script>
+</body>
+</html>
