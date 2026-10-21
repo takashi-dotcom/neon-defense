@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080e24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NEON DEFENSE | スマホ対応版 Ver.0.2</title>
+<title>NEON DEFENSE | 流れるパワーアップ Ver.0.3</title>
 <style>
   :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
   * { box-sizing: border-box; }
@@ -59,32 +59,32 @@
   <canvas id="field" aria-label="敵を撃退するアクションゲーム"></canvas>
   <div class="hud">
     <div class="hudTop">
-      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.2</span></div>
+      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.3</span></div>
       <div class="hudBtns">
         <button id="soundBtn" class="iconBtn" aria-label="音を切り替える" title="効果音">♫̸</button>
         <button id="pauseBtn" class="iconBtn" aria-label="一時停止" title="一時停止">Ⅱ</button>
       </div>
     </div>
     <div class="stats">
-      <div class="stat"><span class="statLabel">🔫 弾数</span><strong class="statValue" id="statBlasters">×1</strong></div>
+      <div class="stat"><span class="statLabel">🔫 同時発射</span><strong class="statValue" id="statBlasters">×1</strong></div>
       <div class="stat"><span class="statLabel">⚡ 連射</span><strong class="statValue" id="statRapid">Lv.1</strong></div>
-      <div class="stat"><span class="statLabel">🛡️ 基地HP</span><strong class="statValue" id="statBase">8</strong></div>
+      <div class="stat"><span class="statLabel">🛡️ 基地HP</span><strong class="statValue" id="statBase">18</strong></div>
     </div>
-    <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">0 / 35 撃破</span></div>
+    <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">0 / 65 撃破</span></div>
   </div>
-  <div class="bottomNote">指で左右にスライドして、大砲を移動！</div>
+  <div class="bottomNote">左右に動いて、流れてくるゲートをキャッチ！</div>
   <div id="startOverlay" class="overlay">
     <div class="panel">
       <span class="tag">たかしくん × オールマイト 第1号</span>
       <h1>NEON<br>DEFENSE</h1>
       <p class="subtitle">ネオン・ディフェンス</p>
-      <p class="lead">迫り来る敵を撃退せよ！<br>ゲートを撃って武器を強化！</p>
+      <p class="lead">迫り来る敵を撃退せよ！<br>流れるゲートに触れて武器を強化！</p>
       <div class="howto">
         <div><span>👆</span> 指を左右に動かして大砲を操作</div>
         <div><span>💥</span> 弾は自動で連続発射！</div>
-        <div><span>🔵</span> 「＋1」を撃つと弾数アップ</div>
-        <div><span>⚡</span> 「連射」を撃つと発射速度アップ</div>
-        <div><span>🛡️</span> 敵35体を倒せばクリア！</div>
+        <div><span>🔵</span> 流れる青いゲートに「自機」で触れると弾数アップ</div>
+        <div><span>⚡</span> 黄色のゲートに「自機」で触れると連射アップ</div>
+        <div><span>🛡️</span> 敵65体を倒せばクリア！</div>
       </div>
       <button class="primary" id="startBtn">▶ ゲームスタート</button>
       <p class="mobileTip">📱 iPhoneでは公開したURLをSafariで開いて遊ぼう。「ファイル」アプリのプレビューでは動作しない場合があります。</p>
@@ -97,7 +97,7 @@
       <h1 id="endTitle">クリア！</h1>
       <p class="lead" id="endMsg"></p>
       <button class="primary" id="restartBtn">↻ もう一度プレイ</button>
-      <p class="small">パワーアップを狙って、もっと上手に撃退しよう！</p>
+      <p class="small">ゲートをキャッチして、強力な弾幕で敵を迎え撃とう！</p>
     </div>
   </div>
   <div id="pauseOverlay" class="overlay hidden">
@@ -123,10 +123,13 @@ window.addEventListener('error',e=>{
 const app=document.getElementById('game');
 const el=id=>document.getElementById(id);
 const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
-const W=390, GOAL=35, TAU=Math.PI*2;
+const W=390, GOAL=65, TAU=Math.PI*2;
+const MAX_BLASTERS=12, MAX_RAPID=6;
+// 敵（約50〜95px/秒）より必ず速く、2枚のゲートが奥から連続で流れてくる。
+const GATE_SPEED=235, GATE_INTERVAL=3.35;
 let H=800, scale=1, dpr=1, last=0, state='ready', pointerDown=false, keyboard=0;
-let t=0, elapsed=0, spawnClock=0, shotClock=0, idSeq=0, flash=0, screenShake=0;
-let player, bullets=[], enemies=[], particles=[], labels=[], gates=[], kills=0, maxHP=8, hp=8, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
+let t=0, elapsed=0, spawnClock=0, shotClock=0, gateClock=0, waveSeq=0, idSeq=0, flash=0, screenShake=0;
+let player, bullets=[], enemies=[], particles=[], labels=[], gates=[], kills=0, maxHP=18, hp=18, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rgba=(hex,opacity)=>hex;
 function resize(){
@@ -140,7 +143,7 @@ function resize(){
   canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
   ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
   if(player) player.y=H*.87;
-  if(gates.length) gates.forEach(g=>g.y=H*.49);
+  // ゲートは流れているので、画面サイズ変更時もその位置を勝手に固定しない。
 }
 function hud(){
   $.blasters.textContent='×'+blastCount;
@@ -151,13 +154,11 @@ function hud(){
   $.base.style.color=hp<=3?'#ff596e':'#ff8499';
 }
 function newGame(){
-  t=0;elapsed=0;spawnClock=1.2;shotClock=.1;idSeq=0;flash=0;screenShake=0;
+  t=0;elapsed=0;spawnClock=1.05;shotClock=.1;gateClock=GATE_INTERVAL;waveSeq=0;idSeq=0;flash=0;screenShake=0;
   player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
   bullets=[];enemies=[];particles=[];labels=[];kills=0;hp=maxHP;blastCount=1;rapidLevel=1;
-  gates=[
-    {x:111,y:H*.49,w:96,h:86,name:'+1',caption:'弾数UP',kind:'multi',need:5,hits:0,cool:0,glow:0},
-    {x:279,y:H*.49,w:96,h:86,name:'⚡',caption:'連射UP',kind:'rapid',need:7,hits:0,cool:0,glow:0}
-  ];
+  gates=[];
+  spawnGatePair(-80);
   hud();$.start.classList.add('hidden');$.end.classList.add('hidden');$.pause.classList.add('hidden');
   state='playing'; last=performance.now();
 }
@@ -168,7 +169,7 @@ function finish(win){
   state='ended';$.end.classList.remove('hidden');
   el('endTag').textContent=win?'MISSION COMPLETE':'GAME OVER';
   el('endTitle').textContent=win?'クリア！！':'基地が突破された！';
-  el('endMsg').innerHTML=win?'敵35体を撃退した！<br>君の勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>ゲートを狙って強化し、もう一度挑戦！';
+  el('endMsg').innerHTML=win?'敵65体を撃退した！<br>君の勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>ゲートに大砲を重ねて強化し、もう一度挑戦！';
   if(win){burst(W/2,H*.35,'#86ffda',75,5);beep(620,.2,'triangle');}
   else beep(140,.4,'sawtooth');
 }
@@ -188,48 +189,79 @@ function burst(x,y,color,n=9,power=1){
     const a=rand(0,TAU),s=rand(50,190)*power;
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.25,.7),maxLife:.7,r:rand(1.2,4.2)*power,color});
   }
-  if(particles.length>290)particles.splice(0,particles.length-290);
+  if(particles.length>350)particles.splice(0,particles.length-350);
 }
 function floatLabel(x,y,text,color='#adfaff'){
   labels.push({x,y,vy:-45,life:1.1,maxLife:1.1,text,color});
 }
+// 2枚1組の流れるパワーアップゲート。弾・敵とは衝突しない。
+function spawnGatePair(y=-105){
+  const pair=++waveSeq;
+  const options=[{label:'+2',value:2},{label:'+3',value:3},{label:'×2',value:2,multiply:true}];
+  const option=options[(pair-1)%options.length];
+  // 交互に左右を入れ替えて「どちらを取るか」を選ぶ楽しさを加える。
+  const multiLeft=pair%2===1;
+  const base={pair,y,w:116,h:78,glow:0,speed:GATE_SPEED,used:false};
+  gates.push({...base,x:multiLeft?105:285,kind:'multi',name:option.label,caption:'弾数UP',bonus:option});
+  gates.push({...base,x:multiLeft?285:105,kind:'rapid',name:'⚡+1',caption:'連射UP'});
+}
 function spawnEnemy(){
-  const armored=elapsed>10 && Math.random()<.18;
-  const x=rand(25,W-25);
-  const speed=rand(47,74)+Math.min(elapsed*.16,14);
+  const armored=elapsed>9 && Math.random()<.19;
+  const x=rand(24,W-24);
+  const speed=rand(49,79)+Math.min(elapsed*.18,15);
   const en={id:++idSeq,x,y:-35,vx:rand(-7,7),speed,r:armored?16:12,hp:armored?3:1,max:armored?3:1,kind:armored?'armored':'normal',phase:rand(0,TAU)};
   enemies.push(en);
-  if(elapsed>18&&Math.random()<.26){
-    enemies.push({id:++idSeq,x:clamp(x+rand(-42,42),22,W-22),y:-70,vx:rand(-5,5),speed:speed*1.05,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
+  // 強くなるにつれて敵の群れも大きくなる。
+  if(elapsed>8&&Math.random()<.55){
+    enemies.push({id:++idSeq,x:clamp(x+rand(-57,57),22,W-22),y:-60,vx:rand(-5,5),speed:speed*1.03,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
+  }
+  if(elapsed>20&&Math.random()<.34){
+    enemies.push({id:++idSeq,x:clamp(x+rand(-75,75),22,W-22),y:-85,vx:rand(-5,5),speed:speed*.97,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
   }
 }
 function fire(){
-  const step=clamp(11,7,13);
+  const step=10.5;
   for(let i=0;i<blastCount;i++){
     const dx=(i-(blastCount-1)/2)*step;
-    bullets.push({x:player.x+dx,y:player.y-41,vx:dx*.09,vy:-650,r:4.0,life:1.7});
+    bullets.push({x:player.x+dx,y:player.y-41,vx:dx*.75,vy:-710,r:4,life:1.7});
   }
-  if(bullets.length>190)bullets.splice(0,bullets.length-190);
+  // iPhoneで大量の弾を描画しても負荷が膨らみすぎないようにする。
+  if(bullets.length>270)bullets.splice(0,bullets.length-270);
   player.recoil=1;
   beep(600,.026,'square',.009);
 }
-function hitGate(g,b){
-  if(g.cool>0|| (g.kind==='multi'&&blastCount>=8) || (g.kind==='rapid'&&rapidLevel>=5))return false;
-  if(Math.abs(b.x-g.x)>g.w*.5||Math.abs(b.y-g.y)>g.h*.5)return false;
-  g.hits++;g.glow=1;
-  burst(b.x,b.y,g.kind==='multi'?'#67e9ff':'#ffe07f',4,.44);
-  if(g.hits>=g.need){
-    g.hits=0;g.cool=3.3;
-    if(g.kind==='multi'){
-      blastCount=Math.min(blastCount+1,8);floatLabel(g.x,g.y-54,'弾数 ＋１','#75faff');
-    } else {
-      rapidLevel=Math.min(rapidLevel+1,5);floatLabel(g.x,g.y-54,'連射UP！','#ffe17e');
-    }
-    burst(g.x,g.y,g.kind==='multi'?'#73eeff':'#ffdc6e',22,1.25);
-    screenShake=Math.max(screenShake,4);
-    beep(850,.2,'triangle',.065);hud();
+function collectGate(g){
+  if(g.kind==='multi'){
+    const before=blastCount;
+    blastCount=g.bonus.multiply?Math.min(MAX_BLASTERS,blastCount*2):Math.min(MAX_BLASTERS,blastCount+g.bonus.value);
+    floatLabel(g.x,player.y-75,blastCount===before?'弾数 MAX':('弾数 '+g.name+'！'),'#75faff');
+  } else {
+    const before=rapidLevel;
+    rapidLevel=Math.min(MAX_RAPID,rapidLevel+1);
+    floatLabel(g.x,player.y-75,rapidLevel===before?'連射 MAX':'連射UP！','#ffe17e');
   }
-  return true;
+  burst(g.x,player.y-22,g.kind==='multi'?'#73eeff':'#ffdc6e',27,1.12);
+  screenShake=Math.max(screenShake,4);beep(880,.2,'triangle',.06);
+  hud();
+  // 同じ列の2枚を同時取得しないよう、触れたゲートの組をまるごと消す。
+  gates=gates.filter(other=>other.pair!==g.pair);
+}
+function updateGates(dt){
+  gateClock-=dt;
+  if(gateClock<=0){spawnGatePair();gateClock+=GATE_INTERVAL;}
+  // 取りこぼしたゲートも画面の下へ流れ、次の2枚が来る。
+  for(const g of gates){g.y+=g.speed*dt;g.glow=Math.max(0,g.glow-dt*2);}
+  // 衝突するのは「自機とゲート」だけ。弾も敵もゲートを素通りする。
+  for(const g of gates){
+    const factor=gateScale(g);
+    const touchX=Math.abs(player.x-g.x)<g.w*factor*.5+15;
+    const touchY=Math.abs((player.y-8)-g.y)<g.h*factor*.48+17;
+    if(touchX&&touchY){collectGate(g);break;}
+  }
+  gates=gates.filter(g=>g.y<H+115);
+}
+function gateScale(g){
+  return .64+.36*clamp(g.y/H,0,1);
 }
 function update(dt){
   t+=dt;elapsed+=dt;
@@ -238,23 +270,22 @@ function update(dt){
   if(keyboard)player.targetX+=keyboard*dt*255;
   player.targetX=clamp(player.targetX,26,W-26);
   player.x+=(player.targetX-player.x)*Math.min(1,dt*18);
-  for(const g of gates){g.cool=Math.max(0,g.cool-dt);g.glow=Math.max(0,g.glow-dt*3);}
+  updateGates(dt);
   spawnClock-=dt;
-  if(spawnClock<=0){spawnEnemy();spawnClock=clamp(.94-elapsed*.006,.43,.94)*rand(.82,1.1);}
+  if(spawnClock<=0){spawnEnemy();spawnClock=clamp(.79-elapsed*.006,.39,.79)*rand(.84,1.12);}
   shotClock-=dt;
-  if(shotClock<=0){fire();shotClock=Math.max(.105,.265-(rapidLevel-1)*.036);}
+  if(shotClock<=0){fire();shotClock=Math.max(.09,.255-(rapidLevel-1)*.033);}
   for(let i=bullets.length-1;i>=0;i--){
     const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.y<-25||b.life<=0){bullets.splice(i,1);continue;}
     let hit=false;
-    for(const g of gates){if(hitGate(g,b)){hit=true;break;}}
-    if(hit){bullets.splice(i,1);continue;}
     for(let j=enemies.length-1;j>=0;j--){
       const e=enemies[j],r=e.r+b.r+3;
       if(Math.abs(b.x-e.x)<r&&Math.abs(b.y-e.y)<r&&((b.x-e.x)**2+(b.y-e.y)**2)<r*r){
         e.hp--;burst(b.x,b.y,'#ffb565',5,.6);beep(185,.05,'triangle',.023);
         if(e.hp<=0){
-          burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',14,.85);
+          burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',17,1.0);
+          if(blastCount>=5)burst(e.x,e.y,'#fff0a4',6,.65);
           enemies.splice(j,1);kills++;hud();floatLabel(e.x,e.y-12,'+1','#e3ffe9');
           if(kills>=GOAL){bullets.splice(i,1);finish(true);return;}
         }
@@ -318,21 +349,21 @@ function drawBackdrop(){
   if(flash){ctx.fillStyle='rgba(255,46,87,'+(flash*.16)+')';ctx.fillRect(0,0,W,H);}
 }
 function drawGate(g){
-  const maxed=(g.kind==='multi'&&blastCount>=8)||(g.kind==='rapid'&&rapidLevel>=5);
-  const inactive=g.cool>0||maxed;
-  const x=g.x-g.w/2,y=g.y-g.h/2;
-  ctx.save();
-  ctx.shadowBlur=inactive?3:15+g.glow*21;ctx.shadowColor=g.kind==='multi'?'#33e6ff':'#ffe177';
-  roundRect(x,y,g.w,g.h,12,inactive?'#253c57bd':g.kind==='multi'?'#0d579cba':'#825619c7',inactive?'#779eb860':g.kind==='multi'?'#63edff':'#ffd66f',2);
+  const s=gateScale(g), inactive=(g.kind==='multi'&&blastCount>=MAX_BLASTERS)||(g.kind==='rapid'&&rapidLevel>=MAX_RAPID);
+  const cyan=g.kind==='multi',color=cyan?'#63edff':'#ffd66f';
+  ctx.save();ctx.translate(g.x,g.y);ctx.scale(s,s);
+  // 撃って壊す障害物ではなく、前から流れてくる半透明の強化ゲート。
+  ctx.shadowBlur=inactive?4:19;ctx.shadowColor=color;
+  roundRect(-g.w/2,-g.h/2,g.w,g.h,13,inactive?'#223b55bf':cyan?'#075b93bb':'#855017bd',inactive?'#8bacc58a':color,2.7);
   ctx.shadowBlur=0;
-  ctx.fillStyle=inactive?'#7594ac':g.kind==='multi'?'#d4faff':'#fff2aa';
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 36px system-ui,sans-serif';
-  ctx.fillText(maxed?'✓':g.name,g.x,g.y-14);
-  ctx.font='800 13px system-ui,sans-serif';ctx.fillText(maxed?'MAX':g.caption,g.x,g.y+19);
-  const barW=g.w-18;
-  roundRect(g.x-barW/2,g.y+34,barW,5,4,'#071c339e');
-  if(!inactive&&g.hits>0){roundRect(g.x-barW/2,g.y+34,barW*g.hits/g.need,5,4,g.kind==='multi'?'#73eaff':'#ffdf7d');}
-  if(inactive&&!maxed){ctx.font='bold 11px system-ui,sans-serif';ctx.fillStyle='#ffffffce';ctx.fillText('充電中',g.x,g.y+37);}
+  ctx.strokeStyle=cyan?'#79f4ff85':'#ffe89c85';ctx.lineWidth=1.2;
+  roundRect(-g.w/2+7,-g.h/2+7,g.w-14,g.h-14,9,null,ctx.strokeStyle,1.1);
+  ctx.fillStyle=inactive?'#b4baca':cyan?'#e7ffff':'#fff2b9';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 31px system-ui,sans-serif';
+  ctx.fillText(inactive?'MAX':g.name,0,-10);
+  ctx.font='800 13px system-ui,sans-serif';ctx.fillText(g.caption,0,22);
+  // 足元に接触判定があることを示す矢印。
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-7,37);ctx.lineTo(7,37);ctx.lineTo(0,45);ctx.fill();
   ctx.restore();
 }
 function drawEnemy(e){
@@ -381,7 +412,7 @@ function drawParticles(){
 function draw(){
   ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
   ctx.save();if(screenShake>0)ctx.translate(rand(-screenShake,screenShake),rand(-screenShake,screenShake));
-  drawBackdrop();gates.forEach(drawGate);
+  drawBackdrop();gates.slice().sort((a,b)=>a.y-b.y).forEach(drawGate);
   for(const e of enemies)drawEnemy(e);
   for(const b of bullets)drawBullet(b);
   drawTurret();drawParticles();ctx.restore();
@@ -422,10 +453,10 @@ window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>{requestAnimationFrame(resize);});
 if(window.visualViewport)window.visualViewport.addEventListener('resize',resize);
 resize();player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
-gates=[{x:111,y:H*.49,w:96,h:86,name:'+1',caption:'弾数UP',kind:'multi',need:5,hits:0,cool:0,glow:0},{x:279,y:H*.49,w:96,h:86,name:'⚡',caption:'連射UP',kind:'rapid',need:7,hits:0,cool:0,glow:0}];
+gates=[{pair:0,x:105,y:H*.48,w:116,h:78,name:'+2',caption:'弾数UP',kind:'multi',glow:0,speed:GATE_SPEED,bonus:{value:2}},{pair:0,x:285,y:H*.48,w:116,h:78,name:'⚡+1',caption:'連射UP',kind:'rapid',glow:0,speed:GATE_SPEED}];
 hud();last=performance.now();requestAnimationFrame(frame);
 // 開発時の動作確認向け。ゲーム操作には不要。
-window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:Math.round(elapsed),height:H});
+window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:+elapsed.toFixed(1),height:H,gateClock:+gateClock.toFixed(2),gates:gates.map(g=>({pair:g.pair,kind:g.kind,x:g.x,y:Math.round(g.y),speed:g.speed}))});
 })();
 </script>
 </body>
