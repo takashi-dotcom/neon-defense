@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080e24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>NEON DEFENSE | 流れるパワーアップ Ver.0.3</title>
+<title>NEON DEFENSE | FEVER RUSH Ver.0.4</title>
 <style>
   :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
   * { box-sizing: border-box; }
@@ -30,6 +30,13 @@
   .progressBg { height:7px; border-radius:8px; overflow:hidden; background:#162b4d; box-shadow:inset 0 1px 4px #0006; flex:1; border:1px solid #ffffff12; }
   .progressFill { height:100%; width:0%; border-radius:8px; background:linear-gradient(90deg,#27cfe9,#76ffc0); box-shadow:0 0 12px #42ffc7; transition:width .15s linear; }
   #killLabel { color:#e6f9ff; font-size:11px; font-weight:900; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .comboStrip {margin-top:8px;display:flex;gap:8px;align-items:center;color:#a8daf0;font-size:11px;font-weight:900;text-shadow:0 1px 5px #071023;}
+  .comboCount {min-width:96px;text-align:left;font-variant-numeric:tabular-nums;}
+  .feverWrap {flex:1;height:8px;overflow:hidden;background:#203149;border-radius:99px;border:1px solid #ffffff26;}
+  .feverFill {height:100%;width:0%;background:linear-gradient(90deg,#3ce1ff,#ffe182);transition:width .2s linear;}
+  .feverText {min-width:65px;text-align:right;color:#ffd471;font-variant-numeric:tabular-nums;}
+  .comboStrip.fever .feverFill {background:linear-gradient(90deg,#ffe66c,#ff7d32);box-shadow:0 0 15px #ffdf6b;}
+  .comboStrip.fever .comboCount {color:#fff48f;text-shadow:0 0 10px #ffa441;}
   .bottomNote { z-index:2; position:absolute; bottom:calc(env(safe-area-inset-bottom) + 10px); left:0; right:0; text-align:center; color:#9fc9e7a0; font-size:11px; letter-spacing:.5px; pointer-events:none; }
   .overlay { position:absolute; z-index:5; inset:0; padding:32px 24px calc(env(safe-area-inset-bottom) + 28px); display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071025e8,#06172ce0); backdrop-filter:blur(9px); text-align:center; }
   /* 小型iPhoneや横画面でもスタートボタンが画面外に隠れないようにする */
@@ -59,7 +66,7 @@
   <canvas id="field" aria-label="敵を撃退するアクションゲーム"></canvas>
   <div class="hud">
     <div class="hudTop">
-      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.3</span></div>
+      <div class="logo">◈ NEON DEFENSE <span style="font-weight:500;opacity:.65">v0.4</span></div>
       <div class="hudBtns">
         <button id="soundBtn" class="iconBtn" aria-label="音を切り替える" title="効果音">♫̸</button>
         <button id="pauseBtn" class="iconBtn" aria-label="一時停止" title="一時停止">Ⅱ</button>
@@ -71,24 +78,26 @@
       <div class="stat"><span class="statLabel">🛡️ 基地HP</span><strong class="statValue" id="statBase">18</strong></div>
     </div>
     <div class="progressWrap"><div class="progressBg"><div id="progressFill" class="progressFill"></div></div><span id="killLabel">0 / 65 撃破</span></div>
+    <div id="comboStrip" class="comboStrip"><span id="comboCount" class="comboCount">CHAIN ×0</span><div class="feverWrap"><div id="feverFill" class="feverFill"></div></div><span id="feverText" class="feverText">FEVER 0/8</span></div>
   </div>
-  <div class="bottomNote">左右に動いて、流れてくるゲートをキャッチ！</div>
+  <div class="bottomNote">ゲートをキャッチ！連続撃破で FEVER RUSH！</div>
   <div id="startOverlay" class="overlay">
     <div class="panel">
       <span class="tag">たかしくん × オールマイト 第1号</span>
       <h1>NEON<br>DEFENSE</h1>
       <p class="subtitle">ネオン・ディフェンス</p>
-      <p class="lead">迫り来る敵を撃退せよ！<br>流れるゲートに触れて武器を強化！</p>
+      <p class="lead">敵の大群を吹き飛ばせ！<br>ゲート強化 × 連続撃破のFEVER RUSH！</p>
       <div class="howto">
         <div><span>👆</span> 指を左右に動かして大砲を操作</div>
         <div><span>💥</span> 弾は自動で連続発射！</div>
         <div><span>🔵</span> 流れる青いゲートに「自機」で触れると弾数アップ</div>
         <div><span>⚡</span> 黄色のゲートに「自機」で触れると連射アップ</div>
+        <div><span>🔥</span> 8連続撃破で5秒間フィーバー！弾幕が激増！</div>
         <div><span>🛡️</span> 敵65体を倒せばクリア！</div>
       </div>
       <button class="primary" id="startBtn">▶ ゲームスタート</button>
       <p class="mobileTip">📱 iPhoneでは公開したURLをSafariで開いて遊ぼう。「ファイル」アプリのプレビューでは動作しない場合があります。</p>
-      <p class="small">iPhone・PC対応 / Web公開してプレイ推奨<br>最初の試作品なので、ここから改良していくぞ！</p>
+      <p class="small">iPhone・PC対応 / Web公開してプレイ推奨<br>Ver.0.4 爽快感強化：敵の群れ・コンボ・衝撃波！</p>
     </div>
   </div>
   <div id="endOverlay" class="overlay hidden">
@@ -122,14 +131,15 @@ window.addEventListener('error',e=>{
 });
 const app=document.getElementById('game');
 const el=id=>document.getElementById(id);
-const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
+const $={start:el('startOverlay'),end:el('endOverlay'),pause:el('pauseOverlay'),blasters:el('statBlasters'),rapid:el('statRapid'),base:el('statBase'),kills:el('killLabel'),progress:el('progressFill'),combo:el('comboCount'),feverBar:el('feverFill'),feverText:el('feverText'),comboStrip:el('comboStrip'),sound:el('soundBtn'),pauseBtn:el('pauseBtn')};
 const W=390, GOAL=65, TAU=Math.PI*2;
-const MAX_BLASTERS=12, MAX_RAPID=6;
+const MAX_BLASTERS=18, MAX_RAPID=7;
+const COMBO_WINDOW=2.8, FEVER_TRIGGER=8, FEVER_DURATION=5.2;
 // 敵（約50〜95px/秒）より必ず速く、2枚のゲートが奥から連続で流れてくる。
 const GATE_SPEED=235, GATE_INTERVAL=3.35;
 let H=800, scale=1, dpr=1, last=0, state='ready', pointerDown=false, keyboard=0;
-let t=0, elapsed=0, spawnClock=0, shotClock=0, gateClock=0, waveSeq=0, idSeq=0, flash=0, screenShake=0;
-let player, bullets=[], enemies=[], particles=[], labels=[], gates=[], kills=0, maxHP=18, hp=18, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
+let t=0, elapsed=0, spawnClock=0, shotClock=0, gateClock=0, waveSeq=0, idSeq=0, flash=0, screenShake=0, combo=0, bestCombo=0, comboClock=0, feverTime=0;
+let player, bullets=[], enemies=[], particles=[], shocks=[], labels=[], gates=[], kills=0, maxHP=22, hp=22, blastCount=1, rapidLevel=1, soundOn=false, audioCtx=null;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const rgba=(hex,opacity)=>hex;
 function resize(){
@@ -151,12 +161,16 @@ function hud(){
   $.base.textContent=hp;
   $.kills.textContent=kills+' / '+GOAL+' 撃破';
   $.progress.style.width=Math.min(100,kills/GOAL*100)+'%';
-  $.base.style.color=hp<=3?'#ff596e':'#ff8499';
+  $.base.style.color=hp<=4?'#ff596e':'#ff8499';
+  $.combo.textContent='CHAIN ×'+combo;
+  $.feverBar.style.width=(feverTime>0?100:Math.min(100,combo/FEVER_TRIGGER*100))+'%';
+  $.feverText.textContent=feverTime>0?'FEVER '+Math.ceil(feverTime)+'s':'FEVER '+Math.min(combo,FEVER_TRIGGER)+'/'+FEVER_TRIGGER;
+  $.comboStrip.classList.toggle('fever',feverTime>0);
 }
 function newGame(){
-  t=0;elapsed=0;spawnClock=1.05;shotClock=.1;gateClock=GATE_INTERVAL;waveSeq=0;idSeq=0;flash=0;screenShake=0;
+  t=0;elapsed=0;spawnClock=.8;shotClock=.1;gateClock=GATE_INTERVAL;waveSeq=0;idSeq=0;flash=0;screenShake=0;combo=0;bestCombo=0;comboClock=0;feverTime=0;
   player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
-  bullets=[];enemies=[];particles=[];labels=[];kills=0;hp=maxHP;blastCount=1;rapidLevel=1;
+  bullets=[];enemies=[];particles=[];shocks=[];labels=[];kills=0;hp=maxHP;blastCount=1;rapidLevel=1;
   gates=[];
   spawnGatePair(-80);
   hud();$.start.classList.add('hidden');$.end.classList.add('hidden');$.pause.classList.add('hidden');
@@ -169,7 +183,7 @@ function finish(win){
   state='ended';$.end.classList.remove('hidden');
   el('endTag').textContent=win?'MISSION COMPLETE':'GAME OVER';
   el('endTitle').textContent=win?'クリア！！':'基地が突破された！';
-  el('endMsg').innerHTML=win?'敵65体を撃退した！<br>君の勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>ゲートに大砲を重ねて強化し、もう一度挑戦！';
+  el('endMsg').innerHTML=win?'敵65体を撃退！<br>最大 '+bestCombo+' CHAIN！ 君の勝利だ！！ 🎉':'撃破数 '+kills+' / '+GOAL+' 体<br>最大 '+bestCombo+' CHAIN！ ゲートで強化して再挑戦！';
   if(win){burst(W/2,H*.35,'#86ffda',75,5);beep(620,.2,'triangle');}
   else beep(140,.4,'sawtooth');
 }
@@ -189,7 +203,29 @@ function burst(x,y,color,n=9,power=1){
     const a=rand(0,TAU),s=rand(50,190)*power;
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rand(.25,.7),maxLife:.7,r:rand(1.2,4.2)*power,color});
   }
-  if(particles.length>350)particles.splice(0,particles.length-350);
+  if(particles.length>300)particles.splice(0,particles.length-300);
+}
+function shockwave(x,y,color,large=false){
+  shocks.push({x,y,r:large?10:4,maxR:large?82:31,life:large?.4:.23,maxLife:large?.4:.23,color});
+  if(shocks.length>35)shocks.splice(0,shocks.length-35);
+}
+function onDefeat(e){
+  kills++;
+  combo=comboClock>0?combo+1:1;comboClock=COMBO_WINDOW;bestCombo=Math.max(bestCombo,combo);
+  burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',16,1.05);
+  shockwave(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff8ba0');
+  screenShake=Math.max(screenShake,combo%5===0?2.4:1);
+  if(combo===FEVER_TRIGGER||(combo>FEVER_TRIGGER&&combo%16===0)){
+    feverTime=FEVER_DURATION;
+    floatLabel(W/2,H*.48,'🔥 FEVER RUSH！','#ffe478');
+    shockwave(W/2,H*.57,'#ffe270',true);
+    burst(W/2,H*.57,'#ffd965',42,1.4);
+    screenShake=5;beep(790,.25,'triangle',.05);
+  }else if(combo>=5&&combo%5===0){
+    floatLabel(clamp(e.x,90,W-90),e.y-28,combo+' CHAIN！','#fff1a2');
+    beep(590,.09,'triangle',.025);
+  }
+  hud();
 }
 function floatLabel(x,y,text,color='#adfaff'){
   labels.push({x,y,vy:-45,life:1.1,maxLife:1.1,text,color});
@@ -197,7 +233,7 @@ function floatLabel(x,y,text,color='#adfaff'){
 // 2枚1組の流れるパワーアップゲート。弾・敵とは衝突しない。
 function spawnGatePair(y=-105){
   const pair=++waveSeq;
-  const options=[{label:'+2',value:2},{label:'+3',value:3},{label:'×2',value:2,multiply:true}];
+  const options=[{label:'+3',value:3},{label:'×2',value:2,multiply:true},{label:'+5',value:5}];
   const option=options[(pair-1)%options.length];
   // 交互に左右を入れ替えて「どちらを取るか」を選ぶ楽しさを加える。
   const multiLeft=pair%2===1;
@@ -206,29 +242,31 @@ function spawnGatePair(y=-105){
   gates.push({...base,x:multiLeft?285:105,kind:'rapid',name:'⚡+1',caption:'連射UP'});
 }
 function spawnEnemy(){
-  const armored=elapsed>9 && Math.random()<.19;
-  const x=rand(24,W-24);
-  const speed=rand(49,79)+Math.min(elapsed*.18,15);
-  const en={id:++idSeq,x,y:-35,vx:rand(-7,7),speed,r:armored?16:12,hp:armored?3:1,max:armored?3:1,kind:armored?'armored':'normal',phase:rand(0,TAU)};
-  enemies.push(en);
-  // 強くなるにつれて敵の群れも大きくなる。
-  if(elapsed>8&&Math.random()<.55){
-    enemies.push({id:++idSeq,x:clamp(x+rand(-57,57),22,W-22),y:-60,vx:rand(-5,5),speed:speed*1.03,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
-  }
-  if(elapsed>20&&Math.random()<.34){
-    enemies.push({id:++idSeq,x:clamp(x+rand(-75,75),22,W-22),y:-85,vx:rand(-5,5),speed:speed*.97,r:12,hp:1,max:1,kind:'normal',phase:rand(0,TAU)});
+  // 次第に「群れ」で登場。iPhoneでも処理しやすいよう同時数を制限。
+  if(enemies.length>=52)return;
+  const count=1+(elapsed>6&&Math.random()<.82?1:0)+(elapsed>14&&Math.random()<.65?1:0)+(elapsed>25&&Math.random()<.45?1:0);
+  const center=rand(55,W-55),stride=rand(28,46);
+  for(let i=0;i<count&&enemies.length<52;i++){
+    const armored=elapsed>10&&Math.random()<.14;
+    const x=clamp(center+(i-(count-1)/2)*stride+rand(-7,7),21,W-21);
+    const speed=rand(57,85)+Math.min(elapsed*.22,14);
+    enemies.push({id:++idSeq,x,y:-38-rand(0,12),vx:rand(-9,9),speed,r:armored?16:12,hp:armored?3:1,max:armored?3:1,kind:armored?'armored':'normal',phase:rand(0,TAU)});
   }
 }
 function fire(){
-  const step=10.5;
-  for(let i=0;i<blastCount;i++){
-    const dx=(i-(blastCount-1)/2)*step;
-    bullets.push({x:player.x+dx,y:player.y-41,vx:dx*.75,vy:-710,r:4,life:1.7});
+  const boosted=feverTime>0;
+  const count=Math.min(26,blastCount+(boosted?Math.max(3,Math.ceil(blastCount*.48)):0));
+  const step=Math.min(10.5,195/Math.max(1,count-1));
+  for(let i=0;i<count;i++){
+    const dx=(i-(count-1)/2)*step;
+    bullets.push({x:player.x+dx,y:player.y-41,vx:dx*(boosted?1.1:.8),vy:boosted?-860:-745,r:boosted?4.8:4,life:1.7,fever:boosted});
   }
-  // iPhoneで大量の弾を描画しても負荷が膨らみすぎないようにする。
-  if(bullets.length>270)bullets.splice(0,bullets.length-270);
+  if(bullets.length>295)bullets.splice(0,bullets.length-295);
   player.recoil=1;
-  beep(600,.026,'square',.009);
+  // 銃口の閃光は控えめに。iPhoneで描画負荷を抑える。
+  burst(player.x,player.y-40,boosted?'#ffe17b':'#a2f4ff',boosted?6:3,.3);
+  if(count>=8)screenShake=Math.max(screenShake,.65);
+  beep(boosted?730:600,.026,'square',.009);
 }
 function collectGate(g){
   if(g.kind==='multi'){
@@ -265,16 +303,20 @@ function gateScale(g){
 }
 function update(dt){
   t+=dt;elapsed+=dt;
-  flash=Math.max(0,flash-dt*3.2);screenShake=Math.max(0,screenShake-dt*14);
+  flash=Math.max(0,flash-dt*3.2);screenShake=Math.max(0,screenShake-dt*15);
+  const prevFever=Math.ceil(feverTime);
+  if(feverTime>0)feverTime=Math.max(0,feverTime-dt);
+  if(comboClock>0){comboClock-=dt;if(comboClock<=0){combo=0;hud();}}
+  if(prevFever!==Math.ceil(feverTime))hud();
   player.recoil=Math.max(0,player.recoil-dt*8);
   if(keyboard)player.targetX+=keyboard*dt*255;
   player.targetX=clamp(player.targetX,26,W-26);
   player.x+=(player.targetX-player.x)*Math.min(1,dt*18);
   updateGates(dt);
   spawnClock-=dt;
-  if(spawnClock<=0){spawnEnemy();spawnClock=clamp(.79-elapsed*.006,.39,.79)*rand(.84,1.12);}
+  if(spawnClock<=0){spawnEnemy();spawnClock=clamp(.78-elapsed*.009,.33,.78)*rand(.85,1.12);}
   shotClock-=dt;
-  if(shotClock<=0){fire();shotClock=Math.max(.09,.255-(rapidLevel-1)*.033);}
+  if(shotClock<=0){fire();shotClock=Math.max(.092,.255-(rapidLevel-1)*.025)*(feverTime>0?.78:1);}
   for(let i=bullets.length-1;i>=0;i--){
     const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.y<-25||b.life<=0){bullets.splice(i,1);continue;}
@@ -282,11 +324,10 @@ function update(dt){
     for(let j=enemies.length-1;j>=0;j--){
       const e=enemies[j],r=e.r+b.r+3;
       if(Math.abs(b.x-e.x)<r&&Math.abs(b.y-e.y)<r&&((b.x-e.x)**2+(b.y-e.y)**2)<r*r){
-        e.hp--;burst(b.x,b.y,'#ffb565',5,.6);beep(185,.05,'triangle',.023);
+        e.hp--;burst(b.x,b.y,b.fever?'#ffe58d':'#ffb565',4,.55);beep(185,.05,'triangle',.015);
         if(e.hp<=0){
-          burst(e.x,e.y,e.kind==='armored'?'#ffdc71':'#ff617d',17,1.0);
-          if(blastCount>=5)burst(e.x,e.y,'#fff0a4',6,.65);
-          enemies.splice(j,1);kills++;hud();floatLabel(e.x,e.y-12,'+1','#e3ffe9');
+          if(blastCount>=6)burst(e.x,e.y,'#fff0a4',5,.65);
+          enemies.splice(j,1);onDefeat(e);
           if(kills>=GOAL){bullets.splice(i,1);finish(true);return;}
         }
         hit=true;break;
@@ -297,13 +338,14 @@ function update(dt){
   for(let i=enemies.length-1;i>=0;i--){
     const e=enemies[i];e.y+=e.speed*dt;e.x=clamp(e.x+Math.sin(t*2+e.phase)*e.vx*dt,18,W-18);
     if(e.y>H*.82){
-      enemies.splice(i,1);hp=Math.max(0,hp-1);hud();flash=.85;screenShake=7;
+      enemies.splice(i,1);hp=Math.max(0,hp-1);combo=0;comboClock=0;hud();flash=.85;screenShake=7;
       burst(e.x,H*.82,'#ff738f',24,1.1);floatLabel(e.x,H*.78,'基地 −１','#ff8196');beep(90,.2,'sawtooth',.06);
       if(hp<=0){finish(false);return;}
     }
   }
   for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.max(0,1-dt*2.1);p.vy*=Math.max(0,1-dt*2.1);if(p.life<=0)particles.splice(i,1);}
   for(let i=labels.length-1;i>=0;i--){const l=labels[i];l.life-=dt;l.y+=l.vy*dt;if(l.life<=0)labels.splice(i,1);}
+  for(let i=shocks.length-1;i>=0;i--){const s=shocks[i];s.life-=dt;s.r+=(s.maxR-s.r)*Math.min(1,dt*16);if(s.life<=0)shocks.splice(i,1);}
 }
 function roundRect(x,y,w,h,r,fill,stroke=null,lineWidth=1){
   ctx.beginPath();
@@ -346,6 +388,7 @@ function drawBackdrop(){
   ctx.fillStyle='#6fdefb22';ctx.fillRect(0,lineY-13,W,25);
   ctx.shadowColor='#75f8ff';ctx.shadowBlur=20;ctx.fillStyle='#51edff';ctx.fillRect(9,lineY-2,W-18,3);ctx.shadowBlur=0;
   ctx.fillStyle='#bbfaff';ctx.font='bold 10px sans-serif';ctx.textAlign='left';ctx.fillText('DEFENSE LINE',14,lineY-10);
+  if(feverTime>0){ctx.fillStyle='rgba(255,191,62,'+(0.03+Math.sin(t*13)*.016)+')';ctx.fillRect(0,0,W,H);}
   if(flash){ctx.fillStyle='rgba(255,46,87,'+(flash*.16)+')';ctx.fillRect(0,0,W,H);}
 }
 function drawGate(g){
@@ -382,9 +425,10 @@ function drawEnemy(e){
   ctx.restore();
 }
 function drawBullet(b){
-  ctx.save();ctx.shadowBlur=15;ctx.shadowColor='#5af8ff';
-  ctx.strokeStyle='#30caff';ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(b.x,b.y+13);ctx.lineTo(b.x,b.y-3);ctx.stroke();
-  ctx.fillStyle='#e4ffff';ctx.beginPath();ctx.ellipse(b.x,b.y-3,3.4,6,0,0,TAU);ctx.fill();ctx.restore();
+  // 弾数が増えたときは発光ぼかしを抑えて60fpsを維持しやすくする。
+  ctx.save();ctx.shadowBlur=bullets.length<75?9:0;ctx.shadowColor=b.fever?'#ffe16b':'#5af8ff';
+  ctx.strokeStyle=b.fever?'#ffc14e':'#30caff';ctx.lineWidth=b.fever?4.8:3.6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(b.x,b.y+14);ctx.lineTo(b.x,b.y-5);ctx.stroke();
+  ctx.fillStyle=b.fever?'#fff5b8':'#e4ffff';ctx.beginPath();ctx.ellipse(b.x,b.y-5,b.fever?3.7:3,6.5,0,0,TAU);ctx.fill();ctx.restore();
 }
 function drawTurret(){
   const x=player.x,y=player.y;
@@ -401,10 +445,19 @@ function drawTurret(){
     roundRect(bx-3,-36+player.recoil*3,6,8,2,'#bdfaff');
   }
   ctx.fillStyle='#6ee5ff';ctx.beginPath();ctx.arc(0,17,12,0,TAU);ctx.fill();ctx.fillStyle='#082942';ctx.beginPath();ctx.arc(0,17,7,0,TAU);ctx.fill();
+  if(player.recoil>.58){
+    ctx.fillStyle=feverTime>0?'#ffe883':'#b0ffff';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=17;
+    const w=blastCount>=8?35:18;ctx.beginPath();ctx.moveTo(-w,-40);ctx.lineTo(0,-51-rand(0,9));ctx.lineTo(w,-40);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  }
   ctx.fillStyle='#c6efff';ctx.font='900 11px sans-serif';ctx.textAlign='center';ctx.fillText('YOU',0,56);
   ctx.restore();
 }
 function drawParticles(){
+  for(const s of shocks){
+    ctx.save();ctx.globalAlpha=clamp(s.life/s.maxLife,0,1)*.8;
+    ctx.lineWidth=3;ctx.strokeStyle=s.color;ctx.shadowColor=s.color;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,TAU);ctx.stroke();ctx.restore();
+  }
   for(const p of particles){ctx.globalAlpha=clamp(p.life/p.maxLife,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,TAU);ctx.fill();}
   ctx.globalAlpha=1;
   for(const l of labels){ctx.save();ctx.globalAlpha=clamp(l.life/l.maxLife,0,1);ctx.font='900 17px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#04152c';ctx.strokeText(l.text,l.x,l.y);ctx.fillStyle=l.color;ctx.fillText(l.text,l.x,l.y);ctx.restore();}
@@ -456,7 +509,7 @@ resize();player={x:W/2,targetX:W/2,y:H*.87,recoil:0};
 gates=[{pair:0,x:105,y:H*.48,w:116,h:78,name:'+2',caption:'弾数UP',kind:'multi',glow:0,speed:GATE_SPEED,bonus:{value:2}},{pair:0,x:285,y:H*.48,w:116,h:78,name:'⚡+1',caption:'連射UP',kind:'rapid',glow:0,speed:GATE_SPEED}];
 hud();last=performance.now();requestAnimationFrame(frame);
 // 開発時の動作確認向け。ゲーム操作には不要。
-window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:+elapsed.toFixed(1),height:H,gateClock:+gateClock.toFixed(2),gates:gates.map(g=>({pair:g.pair,kind:g.kind,x:g.x,y:Math.round(g.y),speed:g.speed}))});
+window.__gameState=()=>({state,kills,hp,blastCount,rapidLevel,enemyCount:enemies.length,bulletCount:bullets.length,combo,bestCombo,feverTime:+feverTime.toFixed(2),maxBullets:295,shocks:shocks.length,playerX:Math.round(player.x),targetX:Math.round(player.targetX),elapsed:+elapsed.toFixed(1),height:H,gateClock:+gateClock.toFixed(2),gates:gates.map(g=>({pair:g.pair,kind:g.kind,x:g.x,y:Math.round(g.y),speed:g.speed}))});
 })();
 </script>
 </body>
